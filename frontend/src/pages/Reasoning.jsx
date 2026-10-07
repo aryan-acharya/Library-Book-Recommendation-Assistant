@@ -1,26 +1,68 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Cover, RecommendationCard } from '../components/BookComponents';
+import { api } from '../api';
+import { RecommendationCard } from '../components/BookComponents';
 
 export default function Reasoning() {
   const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [activeRestartIdx, setActiveRestartIdx] = useState(0);
 
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem('libraai_last_reasoning');
-      if (raw) setResult(JSON.parse(raw));
+      if (raw) {
+        setResult(JSON.parse(raw));
+        return;
+      }
     } catch {
-      setResult(null);
+      // ignore
     }
+
+    // Auto-run inference with default profile so AI Reasoning is never empty
+    setLoading(true);
+    api
+      .recommend({
+        genre: 'Horror',
+        mood: 'Suspenseful',
+        interest: 'Mystery',
+        readingLevel: 'Intermediate',
+        ageGroup: 'Young Adult',
+        minimumRating: 4.0,
+        showAvailableOnly: true,
+        useHillClimbing: true,
+        reasoningMethod: 'forward',
+        restarts: 8,
+      })
+      .then((data) => {
+        setResult(data);
+        sessionStorage.setItem('libraai_last_reasoning', JSON.stringify(data));
+      })
+      .catch((e) => console.error('Failed to load reasoning:', e))
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return (
+      <section className="reasoning-page">
+        <header className="section-head">
+          <h1>AI Reasoning</h1>
+          <p>Running Rule-Based inference and Hill Climbing search...</p>
+        </header>
+        <div className="loading-state-banner">
+          <div className="loading-pulse-spinner"></div>
+          <p>Evaluating IF–THEN rules and candidate neighborhood...</p>
+        </div>
+      </section>
+    );
+  }
 
   if (!result) {
     return (
-      <section>
+      <section className="reasoning-page">
         <header className="section-head">
           <h1>AI Reasoning</h1>
-          <p>No reasoning session yet. Run recommendations first.</p>
+          <p>No reasoning session recorded. Run recommendations to view trace.</p>
         </header>
         <Link className="btn primary" to="/recommend">
           Get AI Recommendations
@@ -45,6 +87,52 @@ export default function Reasoning() {
           dynamic recommendation scoring, and Random-Restart Hill Climbing optimization.
         </p>
       </header>
+
+      {/* Visual Pipeline Architecture Banner */}
+      <div className="reasoning-pipeline-flow">
+        <h3>AI Recommendation Process Architecture</h3>
+        <div className="pipeline-steps-chain">
+          <div className="pipeline-node">
+            <span className="step-num">1</span>
+            <span className="step-title">User Preferences</span>
+          </div>
+          <span className="pipeline-arrow">→</span>
+          <div className="pipeline-node">
+            <span className="step-num">2</span>
+            <span className="step-title">Fact Representation</span>
+          </div>
+          <span className="pipeline-arrow">→</span>
+          <div className="pipeline-node">
+            <span className="step-num">3</span>
+            <span className="step-title">Knowledge Base</span>
+          </div>
+          <span className="pipeline-arrow">→</span>
+          <div className="pipeline-node">
+            <span className="step-num">4</span>
+            <span className="step-title">Rule-Based Reasoning</span>
+          </div>
+          <span className="pipeline-arrow">→</span>
+          <div className="pipeline-node">
+            <span className="step-num">5</span>
+            <span className="step-title">Candidate Books</span>
+          </div>
+          <span className="pipeline-arrow">→</span>
+          <div className="pipeline-node">
+            <span className="step-num">6</span>
+            <span className="step-title">Recommendation Scoring</span>
+          </div>
+          <span className="pipeline-arrow">→</span>
+          <div className="pipeline-node highlight">
+            <span className="step-num">7</span>
+            <span className="step-title">Hill Climbing</span>
+          </div>
+          <span className="pipeline-arrow">→</span>
+          <div className="pipeline-node success">
+            <span className="step-num">8</span>
+            <span className="step-title">Top 5 Recs</span>
+          </div>
+        </div>
+      </div>
 
       <div className="reason-grid">
         <article className="panel">

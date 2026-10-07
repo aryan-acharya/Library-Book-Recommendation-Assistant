@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .hill_climbing import random_restart_hill_climbing
+from .hill_climbing import _full_card, random_restart_hill_climbing
 from .knowledge_base import fol_facts_for_book, get_all_books
 from .rules import RULES, evaluate_rules_for_book, get_rules_public
 from .scoring import recommendation_score, ranking_key, score_breakdown
@@ -59,6 +59,22 @@ def normalize_preferences(payload: dict[str, Any]) -> dict[str, Any]:
     except (TypeError, ValueError):
         restarts = 8
 
+    use_hc = payload.get("useHillClimbing")
+    if use_hc is None:
+        use_hc = payload.get("use_hill_climbing", True)
+    if isinstance(use_hc, str):
+        use_hc = use_hc.lower() not in ("false", "0", "no")
+    use_hc = bool(use_hc)
+
+    avail_only = payload.get("showAvailableOnly")
+    if avail_only is None:
+        avail_only = payload.get("show_available_only")
+    if avail_only is None:
+        avail_only = payload.get("availableOnly")
+    if isinstance(avail_only, str):
+        avail_only = avail_only.lower() in ("true", "1", "yes")
+    avail_only = bool(avail_only)
+
     return {
         "genre": (payload.get("genre") or "").strip() or None,
         "interest": (payload.get("interest") or "").strip() or None,
@@ -71,6 +87,8 @@ def normalize_preferences(payload: dict[str, Any]) -> dict[str, Any]:
         "keywords": keywords,
         "reasoningMethod": (payload.get("reasoningMethod") or "forward").strip().lower(),
         "restarts": restarts,
+        "useHillClimbing": use_hc,
+        "showAvailableOnly": avail_only,
     }
 
 
@@ -79,6 +97,11 @@ def _soft_prefilter(user: dict[str, Any], books: list[dict[str, Any]]) -> list[d
     from .scoring import INTEREST_ALIASES, interest_matches, mood_matches
 
     filtered = books
+    if user.get("showAvailableOnly"):
+        avail_matches = [b for b in filtered if b["availability"].lower() == "available"]
+        if avail_matches:
+            filtered = avail_matches
+
     if user.get("genre"):
         genre_matches = [b for b in filtered if b["genre"].lower() == user["genre"].lower()]
         if genre_matches:
@@ -490,24 +513,82 @@ def run_inference(payload: dict[str, Any]) -> dict[str, Any]:
         for b in candidates[:40]
     ]
 
-    restarts_count = user.get("restarts", 8)
-    hc = random_restart_hill_climbing(user, candidates, restarts=restarts_count, top_n=5)
+    use_hc = user.get("useHillClimbing", True)
+    if use_hc:
+        restarts_count = user.get("restarts", 8)
+        hc = random_restart_hill_climbing(user, candidates, restarts=restarts_count, top_n=5)
+        # Attach FOL sample for top recommendations
+        for rec in hc["recommendations"]:
+            full = next((b for b in candidates if b["id"] == rec["id"]), None)
+            if full:
+                rec["knowledgeRepresentation"] = fol_facts_for_book(full)[:16]
+    else:
+        # Direct Rule-Based ranking without Hill Climbing moves
+        from .scoring import ranking_key
+        sorted_candidates = sorted(candidates, key=lambda b: ranking_key(user, b))
+        top_candidates = sorted_candidates[:5]
+        recommendations = []
+        for b in top_candidates:
+            breakdown = score_breakdown(user, b)
+            card = _full_card(b)
+            card["recommendationScore"] = breakdown["total"]
+            card["maxScore"] = breakdown["maxScore"]
+            card["whyRecommended"] = breakdown["reasons"]
+            card["triggeredRules"] = breakdown["triggeredRules"]
+            card["hillClimbingPath"] = [{"id": b["id"], "title": b["title"], "score": breakdown["total"]}]
+            card["knowledgeRepresentation"] = fol_facts_for_book(b)[:16]
+            recommendations.append(card)
 
-    # Attach FOL sample for top recommendations
-    for rec in hc["recommendations"]:
-        full = next((b for b in candidates if b["id"] == rec["id"]), None)
-        if full:
-            rec["knowledgeRepresentation"] = fol_facts_for_book(full)[:16]
+        best_score = recommendations[0]["recommendationScore"] if recommendations else 0
+        best_title = recommendations[0]["title"] if recommendations else None
+        hc = {
+            "restarts": [],
+            "recommendations": recommendations,
+            "hillClimbing": {
+                "enabled": False,
+                "startBook": None,
+                "steps": [],
+                "localOptimum": None,
+                "restarts": [],
+                "restartCount": 0,
+                "bestScore": best_score,
+                "bestResult": best_title,
+                "iterations": 0,
+                "path": [],
+                "pathSummary": "Candidate books ranked directly by Rule-Based recommendation score.",
+                "note": (
+                    "Hill Climbing Optimization was disabled. Recommendations are ordered by direct Rule-Based scoring."
+                ),
+                "allRuns": [],
+            },
+            "hill_climbing": {
+                "enabled": False,
+                "restarts": 0,
+                "search_paths": [],
+                "best_score": best_score,
+                "iterations": 0,
+                "steps": [],
+            },
+        }
 
     reasoning_steps = list(chaining.get("reasoningSteps", []))
-    reasoning_steps.extend(
-        [
-            "Candidate books scored using preference-weighted recommendation function.",
-            "Hill Climbing maximized recommendation score over neighboring candidates.",
-            "Random restarts explored multiple starting points to avoid weak local optima.",
-            f"Final Top {len(hc['recommendations'])} recommendations ranked by score.",
-        ]
-    )
+    if use_hc:
+        reasoning_steps.extend(
+            [
+                "Candidate books scored using preference-weighted recommendation function.",
+                "Hill Climbing maximized recommendation score over neighboring candidates.",
+                "Random restarts explored multiple starting points to avoid weak local optima.",
+                f"Final Top {len(hc['recommendations'])} recommendations ranked by score.",
+            ]
+        )
+    else:
+        reasoning_steps.extend(
+            [
+                "Candidate books scored using preference-weighted recommendation function.",
+                "Hill Climbing bypassed as per user preference (direct Rule-Based ranking applied).",
+                f"Final Top {len(hc['recommendations'])} recommendations ranked by direct Rule-Based score.",
+            ]
+        )
 
     return {
         "facts": chaining.get("initialFacts", preferences_to_facts(user)),

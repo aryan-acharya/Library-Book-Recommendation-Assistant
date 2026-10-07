@@ -20,6 +20,7 @@ export const api = {
     return request(`/api/books?${q}`);
   },
   book: (id) => request(`/api/books/${id}`),
+  similar: (id) => request(`/api/similar/${id}`),
   search: (q, page = 1, limit = 20) =>
     request(`/api/search?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`),
   rules: () => request('/api/rules'),

@@ -21,6 +21,7 @@ from ai.inference import (  # noqa: E402
 )
 from ai.knowledge_base import (  # noqa: E402
     filter_books,
+    find_similar_detailed,
     fol_facts_for_book,
     get_all_books,
     get_book,
@@ -69,6 +70,21 @@ def api_book_detail(book_id: str):
             "book": book,
             "knowledgeRepresentation": fol_facts_for_book(book),
             "related": related_books(book),
+            "similar": find_similar_detailed(book),
+        }
+    )
+
+
+@app.get("/api/books/<book_id>/similar")
+@app.get("/api/similar/<book_id>")
+def api_similar(book_id: str):
+    book = get_book(book_id)
+    if not book:
+        return jsonify({"error": "Book not found"}), 404
+    return jsonify(
+        {
+            "book": book,
+            "similar": find_similar_detailed(book),
         }
     )
 

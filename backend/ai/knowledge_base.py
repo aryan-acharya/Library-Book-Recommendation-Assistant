@@ -318,3 +318,59 @@ def related_books(book: dict[str, Any], limit: int = 6) -> list[dict[str, Any]]:
         }
         for _, b in related[:limit]
     ]
+
+
+def find_similar_detailed(book: dict[str, Any], limit: int = 12) -> list[dict[str, Any]]:
+    """Return books similar to `book` with explicit similarity score and shared metadata."""
+    results = []
+    b_themes = set(t.lower() for t in book.get("themes", []))
+    b_keywords = set(k.lower() for k in book.get("keywords", []))
+
+    for other in get_all_books():
+        if other["id"] == book["id"]:
+            continue
+
+        shared_themes = [t for t in other.get("themes", []) if t.lower() in b_themes]
+        shared_keywords = [k for k in other.get("keywords", []) if k.lower() in b_keywords]
+
+        score = 0.0
+        if other["genre"].lower() == book["genre"].lower():
+            score += 35.0
+        if other["subgenre"].lower() == book["subgenre"].lower() and book["subgenre"].lower() not in ("general", "unknown", ""):
+            score += 15.0
+        if other["mood"].lower() == book["mood"].lower():
+            score += 15.0
+        if other["readingLevel"].lower() == book["readingLevel"].lower():
+            score += 10.0
+
+        score += min(15.0, len(shared_themes) * 7.5)
+        score += min(15.0, len(shared_keywords) * 5.0)
+
+        if score > 15.0:
+            results.append(
+                {
+                    "id": other["id"],
+                    "title": other["title"],
+                    "author": other["author"],
+                    "score": other["score"],
+                    "ratings": other["ratings"],
+                    "genre": other["genre"],
+                    "subgenre": other["subgenre"],
+                    "mood": other["mood"],
+                    "readingLevel": other["readingLevel"],
+                    "ageGroup": other["ageGroup"],
+                    "availability": other["availability"],
+                    "published": other["published"],
+                    "length": other["length"],
+                    "image": other["image"],
+                    "description": other["description"],
+                    "similarityScore": min(99, int(round(score))),
+                    "sharedGenre": other["genre"].lower() == book["genre"].lower(),
+                    "sharedMood": other["mood"].lower() == book["mood"].lower(),
+                    "sharedThemes": shared_themes,
+                    "sharedKeywords": shared_keywords,
+                }
+            )
+
+    results.sort(key=lambda x: (-x["similarityScore"], -x["score"]))
+    return results[:limit]
