@@ -350,191 +350,188 @@ export default function StudyCompanion() {
         </div>
       </div>
 
-      {/* 3. Main Two-Column Layout Grid */}
-      <div className="study-layout-grid">
-        {/* Left Column: Configuration Frames */}
-        <div className="study-sidebar-col">
-          {/* Step 1: Select Book Frame */}
-          <section className="study-card-panel" ref={searchContainerRef}>
-            <div className="panel-step-badge">Step 1</div>
-            <h3 className="panel-title">Select a Book</h3>
-            <p className="panel-sub">
-              Pick any book from the library catalog to build your daily reading roadmap.
-            </p>
+      {/* 3. Horizontal Configuration Row: Step 1 and Step 2 Side-by-Side */}
+      <div className="study-steps-row">
+        {/* Step 1: Select Book Frame */}
+        <section className="study-card-panel step1-panel" ref={searchContainerRef}>
+          <div className="panel-step-badge">Step 1</div>
+          <h3 className="panel-title">Select a Book</h3>
+          <p className="panel-sub">
+            Pick any book from the library catalog to build your daily reading roadmap.
+          </p>
 
-            {/* Search Input Bar */}
-            <form className="study-search-bar" onSubmit={handleSearchSubmit}>
-              <div className="study-search-input-wrap">
-                <span className="search-icon-symbol">🔍</span>
-                <input
-                  type="text"
-                  placeholder="Search book title, author, or keyword..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                  autoComplete="off"
-                />
-                {searchQuery ? (
-                  <button
-                    type="button"
-                    className="study-search-clear"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSuggestions([]);
-                      setShowSuggestions(false);
-                    }}
-                    title="Clear search"
-                  >
-                    ✕
-                  </button>
-                ) : null}
-              </div>
-              <button
-                type="submit"
-                className="btn-study-search-submit"
-                disabled={searching}
-              >
-                {searching ? '...' : 'Search'}
-              </button>
-            </form>
-
-            {/* Live Autocomplete Dropdown */}
-            {showSuggestions && suggestions.length > 0 ? (
-              <div className="study-search-results-list">
-                <div className="results-head">Matching Catalog Books:</div>
-                {suggestions.map((b) => (
-                  <div
-                    key={b.id}
-                    className="compact-select-card"
-                    onClick={() => handleSelectBookItem(b)}
-                  >
-                    <BookCover
-                      src={b.image}
-                      alt={b.title}
-                      containerClassName="compact-card-thumb"
-                    />
-                    <div className="compact-card-meta">
-                      <strong>{b.title}</strong>
-                      <span>by {b.author} · {b.genre}</span>
-                    </div>
-                    <span className="compact-choose-pill">Select →</span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-
-            {/* Quick Pick Pills for 1-Click Planning */}
-            <div className="study-quick-picks">
-              <span className="quick-picks-label">Quick picks:</span>
-              <div className="quick-picks-list">
-                {QUICK_PICKS.map((qp) => (
-                  <button
-                    key={qp.id}
-                    type="button"
-                    className={`study-quick-pill ${selectedBook?.id === qp.id ? 'active' : ''}`}
-                    onClick={() => handleSelectBookItem(qp)}
-                  >
-                    {qp.title}
-                  </button>
-                ))}
-              </div>
+          {/* Search Input Bar */}
+          <form className="study-search-bar" onSubmit={handleSearchSubmit}>
+            <div className="study-search-input-wrap">
+              <span className="search-icon-symbol">🔍</span>
+              <input
+                type="text"
+                placeholder="Search book title, author, or keyword..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                autoComplete="off"
+              />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  className="study-search-clear"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSuggestions([]);
+                    setShowSuggestions(false);
+                  }}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              ) : null}
             </div>
+            <button
+              type="submit"
+              className="btn-study-search-submit"
+              disabled={searching}
+            >
+              {searching ? '...' : 'Search'}
+            </button>
+          </form>
 
-            {/* Selected Book Preview Card */}
-            {selectedBook ? (
-              <div className="selected-book-preview-card">
-                <BookCover
-                  src={selectedBook.image}
-                  alt={selectedBook.title}
-                  containerClassName="preview-cover-container"
-                />
-                <div className="preview-info">
-                  <span className="preview-label">Selected Base:</span>
-                  <h4 className="preview-title">{selectedBook.title}</h4>
-                  <p className="preview-author">by {selectedBook.author}</p>
-                  <div className="preview-tags">
-                    <span className="tag-pill genre">{selectedBook.genre || 'Fiction'}</span>
-                    <span className="tag-pill length">
-                      {selectedBook.length ? `${selectedBook.length} Length` : '~320 Pages'}
-                    </span>
-                    {selectedBook.score ? (
-                      <span className="tag-pill gold">★ {Number(selectedBook.score).toFixed(1)}</span>
-                    ) : null}
+          {/* Live Autocomplete Dropdown */}
+          {showSuggestions && suggestions.length > 0 ? (
+            <div className="study-search-results-list">
+              <div className="results-head">Matching Catalog Books:</div>
+              {suggestions.map((b) => (
+                <div
+                  key={b.id}
+                  className="compact-select-card"
+                  onClick={() => handleSelectBookItem(b)}
+                >
+                  <BookCover
+                    src={b.image}
+                    alt={b.title}
+                    containerClassName="compact-card-thumb"
+                  />
+                  <div className="compact-card-meta">
+                    <strong>{b.title}</strong>
+                    <span>by {b.author} · {b.genre}</span>
                   </div>
+                  <span className="compact-choose-pill">Select →</span>
                 </div>
-              </div>
-            ) : loadingBook ? (
-              <LoadingState message="Loading book details..." />
-            ) : (
-              <p className="muted-hint">Select any book from the catalog or quick picks above.</p>
-            )}
-          </section>
-
-          {/* Step 2: Configure Duration Frame */}
-          <section className="study-card-panel">
-            <div className="panel-step-badge">Step 2</div>
-            <h3 className="panel-title">Target Duration</h3>
-            <p className="panel-sub">
-              How many days would you like to allocate to finish this book?
-            </p>
-
-            <div className="days-input-wrapper">
-              <label htmlFor="study-days-input">Total Target Days:</label>
-              <div className="stepper-row">
-                <button
-                  type="button"
-                  className="stepper-btn"
-                  onClick={() => setDays((d) => Math.max(1, Number(d) - 1))}
-                  title="Decrease days"
-                >
-                  −
-                </button>
-                <input
-                  id="study-days-input"
-                  type="number"
-                  min="1"
-                  max="60"
-                  className="study-days-num-input"
-                  value={days}
-                  onChange={(e) => setDays(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
-                />
-                <button
-                  type="button"
-                  className="stepper-btn"
-                  onClick={() => setDays((d) => Math.min(60, Number(d) + 1))}
-                  title="Increase days"
-                >
-                  +
-                </button>
-                <span className="days-unit">Days</span>
-              </div>
+              ))}
             </div>
+          ) : null}
 
-            {/* Quick Duration Selector Chips */}
-            <div className="days-quick-chips">
-              {[3, 7, 14, 21, 30].map((d) => (
+          {/* Quick Pick Pills for 1-Click Planning */}
+          <div className="study-quick-picks">
+            <span className="quick-picks-label">Quick picks:</span>
+            <div className="quick-picks-list">
+              {QUICK_PICKS.map((qp) => (
                 <button
-                  key={d}
+                  key={qp.id}
                   type="button"
-                  className={`chip-day ${Number(days) === d ? 'active' : ''}`}
-                  onClick={() => setDays(d)}
+                  className={`study-quick-pill ${selectedBook?.id === qp.id ? 'active' : ''}`}
+                  onClick={() => handleSelectBookItem(qp)}
                 >
-                  {d} Days
+                  {qp.title}
                 </button>
               ))}
             </div>
+          </div>
 
-            {/* Pace Metric Pill */}
-            <div className="daily-pace-estimate">
-              <div className="pace-left">
-                <span>Calculated Daily Pace:</span>
-                <strong>~{estDailyPages} pages/day</strong>
+          {/* Selected Book Preview Card */}
+          {selectedBook ? (
+            <div className="selected-book-preview-card">
+              <BookCover
+                src={selectedBook.image}
+                alt={selectedBook.title}
+                containerClassName="preview-cover-container"
+              />
+              <div className="preview-info">
+                <span className="preview-label">Selected Book:</span>
+                <h4 className="preview-title" title={selectedBook.title}>{selectedBook.title}</h4>
+                <p className="preview-author">by {selectedBook.author}</p>
+                <div className="preview-tags">
+                  <span className="tag-pill genre">{selectedBook.genre || 'Fiction'}</span>
+                  <span className="tag-pill length">
+                    {selectedBook.length ? `${selectedBook.length} Length` : '~320 Pages'}
+                  </span>
+                  {selectedBook.score ? (
+                    <span className="tag-pill gold">★ {Number(selectedBook.score).toFixed(1)}</span>
+                  ) : null}
+                </div>
               </div>
-              <span className="pace-badge">
-                {estDailyPages <= 25 ? '🌿 Relaxed' : estDailyPages <= 50 ? '⚡ Moderate' : '🔥 Sprint'}
-              </span>
             </div>
-          </section>
+          ) : loadingBook ? (
+            <LoadingState message="Loading book details..." />
+          ) : (
+            <p className="muted-hint">Select any book from the catalog or quick picks above.</p>
+          )}
+        </section>
+
+        {/* Step 2: Configure Duration Frame */}
+        <section className="study-card-panel step2-panel">
+          <div className="panel-step-badge">Step 2</div>
+          <h3 className="panel-title">Target Duration</h3>
+          <p className="panel-sub">
+            How many days would you like to allocate to finish this book?
+          </p>
+
+          <div className="days-input-wrapper">
+            <label htmlFor="study-days-input">Total Target Days:</label>
+            <div className="stepper-row">
+              <button
+                type="button"
+                className="stepper-btn"
+                onClick={() => setDays((d) => Math.max(1, Number(d) - 1))}
+                title="Decrease days"
+              >
+                −
+              </button>
+              <input
+                id="study-days-input"
+                type="number"
+                min="1"
+                max="60"
+                className="study-days-num-input"
+                value={days}
+                onChange={(e) => setDays(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
+              />
+              <button
+                type="button"
+                className="stepper-btn"
+                onClick={() => setDays((d) => Math.min(60, Number(d) + 1))}
+                title="Increase days"
+              >
+                +
+              </button>
+              <span className="days-unit">Days</span>
+            </div>
+          </div>
+
+          {/* Quick Duration Selector Chips */}
+          <div className="days-quick-chips">
+            {[3, 7, 14, 21, 30].map((d) => (
+              <button
+                key={d}
+                type="button"
+                className={`chip-day ${Number(days) === d ? 'active' : ''}`}
+                onClick={() => setDays(d)}
+              >
+                {d} Days
+              </button>
+            ))}
+          </div>
+
+          {/* Pace Metric Pill */}
+          <div className="daily-pace-estimate">
+            <div className="pace-left">
+              <span>Calculated Daily Pace:</span>
+              <strong>~{estDailyPages} pages/day</strong>
+            </div>
+            <span className="pace-badge">
+              {estDailyPages <= 25 ? '🌿 Relaxed' : estDailyPages <= 50 ? '⚡ Moderate' : '🔥 Sprint'}
+            </span>
+          </div>
 
           {/* Step 3: Action Buttons Frame */}
           <div className="study-actions-panel">
@@ -555,11 +552,11 @@ export default function StudyCompanion() {
             </button>
           </div>
 
-          {/* Saved Reading Plans Frame */}
+          {/* Saved Reading Plans Strip */}
           {savedPlans.length > 0 ? (
-            <section className="study-card-panel">
+            <div className="step2-saved-plans-block">
               <div className="saved-plans-header">
-                <h3 className="panel-title">Active Plans</h3>
+                <span className="saved-plans-mini-title">Active Plans</span>
                 <span className="plans-counter-pill">{savedPlans.length}</span>
               </div>
               <div className="saved-plans-compact-list">
@@ -614,125 +611,125 @@ export default function StudyCompanion() {
                   );
                 })}
               </div>
-            </section>
+            </div>
           ) : null}
-        </div>
+        </section>
+      </div>
 
-        {/* Right Column: Step 4 Reading Schedule Dashboard */}
-        <div className="study-main-col" ref={scheduleRef}>
-          {activePlan ? (
-            <div className="reading-schedule-dashboard">
-              {/* Header Info Banner Frame */}
-              <section className="schedule-meta-banner">
-                <div className="banner-left">
-                  <BookCover
-                    src={activePlan.image}
-                    alt={activePlan.title}
-                    containerClassName="schedule-hero-cover"
-                  />
-                  <div className="banner-text">
-                    <span className="badge-pill active">Step 4: Active Reading Schedule</span>
-                    <h2 className="schedule-title">{activePlan.title}</h2>
-                    <p className="author-name">by {activePlan.author}</p>
-                    <div className="schedule-key-metrics">
-                      <span className="key-metric">
-                        Total: <strong>~{activePlan.totalPages} pages</strong>
-                      </span>
-                      <span className="key-metric">
-                        Daily Pace: <strong>~{activePlan.pagesPerDay} pages/day</strong>
-                      </span>
-                      <span className="key-metric">
-                        Duration: <strong>{activePlan.days} days</strong>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Progress Box & Action */}
-                <div className="banner-progress-box">
-                  <div className="progress-top-row">
-                    <span className="progress-percentage">{progressPct}%</span>
-                    <span className="progress-count">
-                      {completedCount} / {totalDaysCount} Days Completed
+      {/* 4. Full-Width Step 4 Reading Schedule Dashboard (Below Step 1 & 2) */}
+      <div className="study-step4-container" ref={scheduleRef}>
+        {activePlan ? (
+          <div className="reading-schedule-dashboard">
+            {/* Header Info Banner Frame */}
+            <section className="schedule-meta-banner">
+              <div className="banner-left">
+                <BookCover
+                  src={activePlan.image}
+                  alt={activePlan.title}
+                  containerClassName="schedule-hero-cover"
+                />
+                <div className="banner-text">
+                  <span className="badge-pill active">Step 4: Active Reading Schedule</span>
+                  <h2 className="schedule-title">{activePlan.title}</h2>
+                  <p className="author-name">by {activePlan.author}</p>
+                  <div className="schedule-key-metrics">
+                    <span className="key-metric">
+                      Total: <strong>~{activePlan.totalPages} pages</strong>
+                    </span>
+                    <span className="key-metric">
+                      Daily Pace: <strong>~{activePlan.pagesPerDay} pages/day</strong>
+                    </span>
+                    <span className="key-metric">
+                      Duration: <strong>{activePlan.days} days</strong>
                     </span>
                   </div>
-                  <div className="large-progress-track">
-                    <div className="large-progress-fill" style={{ width: `${progressPct}%` }}></div>
-                  </div>
-                  <div className="estimate-row">
-                    {progressPct === 100 ? (
-                      <span className="completion-estimate complete">🎉 All targets completed! Moved to shelf.</span>
-                    ) : (
-                      <span className="completion-estimate">
-                        {remainingDays} {remainingDays === 1 ? 'day' : 'days'} remaining to finish
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    className="btn-continue-reading"
-                    onClick={handleContinueReading}
-                  >
-                    📖 Continue Reading
-                  </button>
                 </div>
-              </section>
+              </div>
 
-              {/* Day-by-Day Reading Schedule Grid Frame */}
-              <section className="schedule-days-section">
-                <div className="section-title-strip">
-                  <div>
-                    <h3 className="section-headline">Daily Reading Targets</h3>
-                    <p className="section-sub">
-                      Click any day card to log completion or mark pages read.
-                    </p>
-                  </div>
-                  <span className="sub-hint">
-                    {completedCount} of {totalDaysCount} finished
+              {/* Progress Box & Action */}
+              <div className="banner-progress-box">
+                <div className="progress-top-row">
+                  <span className="progress-percentage">{progressPct}%</span>
+                  <span className="progress-count">
+                    {completedCount} / {totalDaysCount} Days Completed
                   </span>
                 </div>
-
-                <div className="daily-schedule-cards-grid">
-                  {(activePlan.schedule || []).map((item) => {
-                    const isDone = (activePlan.completedDays || []).includes(item.day);
-                    return (
-                      <div
-                        key={item.day}
-                        className={`daily-target-card ${isDone ? 'done' : ''}`}
-                        onClick={() => handleDayToggle(item.day)}
-                        title={isDone ? `Day ${item.day} completed. Click to mark pending.` : `Click to mark Day ${item.day} as completed.`}
-                      >
-                        <div className="card-header-row">
-                          <span className="day-badge">Day {item.day}</span>
-                          <span className={`status-pill ${isDone ? 'checked' : 'pending'}`}>
-                            {isDone ? '✓ Completed' : '○ Pending'}
-                          </span>
-                        </div>
-
-                        <div className="card-page-range">
-                          Pages {item.startPage} – {item.endPage}
-                        </div>
-
-                        <div className="card-target-footer">
-                          <span>Daily Target:</span>
-                          <strong>{item.targetPages} pages</strong>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="large-progress-track">
+                  <div className="large-progress-fill" style={{ width: `${progressPct}%` }}></div>
                 </div>
-              </section>
-            </div>
-          ) : (
-            <EmptyState
-              icon="📖"
-              title="Ready to Build Your Reading Schedule"
-              message="Select or search for any book in Step 1 to generate a personalized daily reading plan."
-              actionText="Generate 7-Day Plan"
-              onAction={handleCreatePlan}
-            />
-          )}
-        </div>
+                <div className="estimate-row">
+                  {progressPct === 100 ? (
+                    <span className="completion-estimate complete">🎉 All targets completed! Moved to shelf.</span>
+                  ) : (
+                    <span className="completion-estimate">
+                      {remainingDays} {remainingDays === 1 ? 'day' : 'days'} remaining to finish
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="btn-continue-reading"
+                  onClick={handleContinueReading}
+                >
+                  📖 Continue Reading
+                </button>
+              </div>
+            </section>
+
+            {/* Day-by-Day Reading Schedule Grid Frame */}
+            <section className="schedule-days-section">
+              <div className="section-title-strip">
+                <div>
+                  <h3 className="section-headline">Daily Reading Targets</h3>
+                  <p className="section-sub">
+                    Click any day card to log completion or mark pages read.
+                  </p>
+                </div>
+                <span className="sub-hint">
+                  {completedCount} of {totalDaysCount} finished
+                </span>
+              </div>
+
+              <div className="daily-schedule-cards-grid">
+                {(activePlan.schedule || []).map((item) => {
+                  const isDone = (activePlan.completedDays || []).includes(item.day);
+                  return (
+                    <div
+                      key={item.day}
+                      className={`daily-target-card ${isDone ? 'done' : ''}`}
+                      onClick={() => handleDayToggle(item.day)}
+                      title={isDone ? `Day ${item.day} completed. Click to mark pending.` : `Click to mark Day ${item.day} as completed.`}
+                    >
+                      <div className="card-header-row">
+                        <span className="day-badge">Day {item.day}</span>
+                        <span className={`status-pill ${isDone ? 'checked' : 'pending'}`}>
+                          {isDone ? '✓ Completed' : '○ Pending'}
+                        </span>
+                      </div>
+
+                      <div className="card-page-range">
+                        Pages {item.startPage} – {item.endPage}
+                      </div>
+
+                      <div className="card-target-footer">
+                        <span>Daily Target:</span>
+                        <strong>{item.targetPages} pages</strong>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+        ) : (
+          <EmptyState
+            icon="📖"
+            title="Ready to Build Your Reading Schedule"
+            message="Select or search for any book in Step 1 to generate a personalized daily reading plan."
+            actionText="Generate 7-Day Plan"
+            onAction={handleCreatePlan}
+          />
+        )}
       </div>
     </div>
   );

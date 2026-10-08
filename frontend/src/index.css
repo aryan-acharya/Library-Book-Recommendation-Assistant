@@ -8197,19 +8197,48 @@ textarea {
   font-size: 1.1rem;
 }
 
-/* Two Column Layout Grid */
-.study-layout-grid {
+/* Horizontal Steps Row (Step 1 and Step 2 Side by Side) */
+.study-steps-row {
   display: grid;
-  grid-template-columns: 380px 1fr;
-  gap: 1.5rem;
-  align-items: start;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  align-items: stretch;
   width: 100%;
 }
 
-.study-sidebar-col {
+@media (max-width: 900px) {
+  .study-steps-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.step1-panel,
+.step2-panel {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.step1-panel {
+  gap: 0.95rem;
+}
+
+.step2-panel {
+  gap: 0.95rem;
+}
+
+.step2-panel .days-quick-chips {
+  margin-top: 0;
+}
+
+.step2-panel .daily-pace-estimate {
+  margin-top: 0;
+}
+
+.step2-panel .study-actions-panel {
+  margin-top: auto;
+  padding-top: 0.4rem;
 }
 
 /* Modular Frames in Sidebar */
@@ -8480,6 +8509,7 @@ textarea {
   background: #071526;
   border: 1px solid #1A3654;
   border-radius: 12px;
+  margin-top: auto;
 }
 
 .preview-cover-container.book-cover-container,
@@ -8718,11 +8748,28 @@ textarea {
   color: #FFFFFF;
 }
 
-/* Saved Active Plans List */
+/* Saved Active Plans Strip in Step 2 */
+.step2-saved-plans-block {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #1A3654;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
 .saved-plans-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.saved-plans-mini-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .plans-counter-pill {
@@ -8739,6 +8786,9 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+  max-height: 170px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .saved-plan-row {
@@ -8843,8 +8893,12 @@ textarea {
   background: rgba(239, 68, 68, 0.1);
 }
 
-/* Right Column: Step 4 Reading Schedule Dashboard */
-.study-main-col {
+/* Full-Width Step 4 Reading Schedule Dashboard (Below Step 1 & 2) */
+.study-step4-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
   min-width: 0;
 }
 
