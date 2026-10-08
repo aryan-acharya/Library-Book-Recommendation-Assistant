@@ -102,12 +102,40 @@ const navItems = [
   },
 ];
 
+const LITERARY_QUOTES = [
+  {
+    quote: '“A reader lives a thousand lives before they die.”',
+    author: '— George R.R. Martin',
+  },
+  {
+    quote: '“There is no friend as loyal as a book.”',
+    author: '— Ernest Hemingway',
+  },
+  {
+    quote: '“I have always imagined that Paradise will be a kind of a library.”',
+    author: '— Jorge Luis Borges',
+  },
+  {
+    quote: '“Books are mirrors: you only see in them what you already have inside you.”',
+    author: '— Carlos Ruiz Zafón',
+  },
+  {
+    quote: '“A room without books is like a body without a soul.”',
+    author: '— Marcus Tullius Cicero',
+  },
+  {
+    quote: '“Books are a uniquely portable magic.”',
+    author: '— Stephen King',
+  },
+];
+
 export default function Layout() {
   const [globalQuery, setGlobalQuery] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [quoteIndex, setQuoteIndex] = useState(0);
   const notifRef = useRef(null);
   const userRef = useRef(null);
   const navigate = useNavigate();
@@ -305,17 +333,25 @@ export default function Layout() {
           </nav>
 
           {/* Bottom Sidebar Quote Card */}
-          <div className="sidebar-quote-card">
-            <div className="quote-image-wrap">
-              <img src={quoteReaderImg} alt="Reader in library" className="quote-image" />
-            </div>
-            <div className="quote-text-wrap">
-              <p className="quote-text">
-                “A reader lives a thousand lives before they die.”
-              </p>
-              <p className="quote-author">— George R.R. Martin</p>
-            </div>
-          </div>
+          {(() => {
+            const currentQuote = LITERARY_QUOTES[quoteIndex % LITERARY_QUOTES.length];
+            return (
+              <div
+                className="sidebar-quote-card"
+                onClick={() => setQuoteIndex((i) => (i + 1) % LITERARY_QUOTES.length)}
+                title="Click to discover another inspiring book quote"
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="quote-image-wrap">
+                  <img src={quoteReaderImg} alt="Reader in library" className="quote-image" />
+                </div>
+                <div className="quote-text-wrap">
+                  <p className="quote-text">{currentQuote.quote}</p>
+                  <p className="quote-author">{currentQuote.author}</p>
+                </div>
+              </div>
+            );
+          })()}
         </aside>
 
         {/* Mobile backdrop */}

@@ -454,9 +454,13 @@ textarea {
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 1.25rem 0.75rem;
-  min-height: calc(100vh - 68px);
+  position: sticky;
+  top: 68px;
+  height: calc(100vh - 68px);
+  max-height: calc(100vh - 68px);
+  align-self: start;
   box-sizing: border-box;
   overflow-y: auto;
   overflow-x: hidden;
@@ -466,6 +470,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  flex-shrink: 0;
 }
 
 .sidebar-link {
@@ -505,12 +510,23 @@ textarea {
 
 /* Bottom Sidebar Quote Card */
 .sidebar-quote-card {
-  margin-top: 1.5rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  margin-top: 1.15rem;
+  background: #071526;
+  border: 1px solid #1A3654;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+}
+
+.sidebar-quote-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.15);
 }
 
 .quote-image-wrap {
@@ -518,6 +534,7 @@ textarea {
   height: 120px;
   overflow: hidden;
   position: relative;
+  background: #040c16;
 }
 
 .quote-image {
@@ -525,29 +542,31 @@ textarea {
   height: 100%;
   object-fit: cover;
   transition: transform 0.4s ease;
+  display: block;
 }
 
 .sidebar-quote-card:hover .quote-image {
-  transform: scale(1.04);
+  transform: scale(1.05);
 }
 
 .quote-text-wrap {
-  padding: 0.75rem 0.85rem;
-  background: var(--bg-card);
+  padding: 0.85rem 0.95rem;
+  background: #071526;
 }
 
 .quote-text {
   font-size: 0.82rem;
-  line-height: 1.35;
+  line-height: 1.4;
   color: #E2E8F0;
   font-style: italic;
-  margin-bottom: 0.35rem;
+  margin: 0 0 0.45rem 0;
 }
 
 .quote-author {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   color: var(--accent-cyan);
   font-weight: 600;
+  margin: 0;
 }
 
 /* Main Content Area */
