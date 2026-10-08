@@ -2,7 +2,6 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import About from './pages/About';
 import Analytics from './pages/Analytics';
-import Availability from './pages/Availability';
 import BookDetails from './pages/BookDetails';
 import Explore from './pages/Explore';
 import Favorites from './pages/Favorites';
@@ -30,7 +29,7 @@ export default function App() {
           <Route path="study" element={<StudyCompanion />} />
           <Route path="library" element={<MyLibrary />} />
           <Route path="favorites" element={<Favorites />} />
-          <Route path="availability" element={<Availability />} />
+          <Route path="availability" element={<Navigate to="/search" replace />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="books/:id" element={<BookDetails />} />
           <Route path="knowledge-base" element={<KnowledgeBase />} />
