@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import heroBookImg from '../assets/hero_magic_book.jpg';
-import { TopBookCard } from '../components/BookComponents';
+import { BookCover, TopBookCard } from '../components/BookComponents';
 import BookDetailsModal from '../components/BookDetailsModal';
 import { isFavorite, toggleFavorite, trackActivity } from '../libraryStore';
 
@@ -900,13 +900,10 @@ export default function Recommend() {
                       className="candidate-row-item"
                       onClick={() => setSelectedBook(book)}
                     >
-                      <img
+                      <BookCover
                         src={book.image}
                         alt={book.title}
-                        className="candidate-thumb"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
+                        containerClassName="candidate-thumb"
                       />
                       <div className="candidate-row-meta">
                         <div className="candidate-row-title-line">

@@ -2,45 +2,72 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { isFavorite, toggleFavorite } from '../libraryStore';
 
-const PLACEHOLDER =
-  'data:image/svg+xml,' +
-  encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300">
-      <rect fill="#0B1726" width="200" height="300"/>
-      <rect x="10" y="10" width="180" height="280" fill="none" stroke="#18314A" stroke-width="2" rx="8"/>
-      <text x="100" y="145" fill="#38BDF8" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif" font-size="28" font-weight="bold" text-anchor="middle">📖</text>
-      <text x="100" y="175" fill="#94A3B8" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif" font-size="13" font-weight="600" text-anchor="middle">LibraAI Book</text>
-    </svg>`
-  );
+/**
+ * Universal Shared BookCover Component.
+ * Ensures the COMPLETE book cover is always visible inside a consistent,
+ * properly sized frame with object-fit: contain (never cropped or stretched).
+ * Displays a styled fallback if the image fails or is missing.
+ */
+export function BookCover({
+  src,
+  alt,
+  title,
+  className = '',
+  containerClassName = '',
+}) {
+  const [prevSrc, setPrevSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
 
-export function Cover({ src, alt, className = '' }) {
+  if (prevSrc !== src) {
+    setPrevSrc(src);
+    setHasError(false);
+  }
+
+  const isInvalid = !src || hasError;
+
   return (
-    <img
-      className={`cover ${className}`}
-      src={src || PLACEHOLDER}
-      alt={alt || 'Book cover'}
-      loading="lazy"
-      onError={(e) => {
-        e.currentTarget.src = PLACEHOLDER;
-      }}
-    />
+    <div
+      className={`book-cover-container ${containerClassName} ${className}`.trim()}
+    >
+      {isInvalid ? (
+        <div className="book-cover-fallback">
+          <span className="fallback-book-icon">📖</span>
+          <span className="fallback-text">Cover Unavailable</span>
+        </div>
+      ) : (
+        <img
+          className="book-cover"
+          src={src}
+          alt={alt || title || 'Book cover'}
+          loading="lazy"
+          onError={() => setHasError(true)}
+        />
+      )}
+    </div>
   );
 }
 
 /**
- * Universal Standard BookCard used across all pages of LibraAI.
- * Meets Requirement 29:
- * - Rank (optional)
- * - Cover
- * - Title
- * - Author
- * - Rating (★ 4.2)
- * - Badges (Genre / Subgenre / Mood / Theme)
- * - Availability dot (● Available / ● Limited / ● Unavailable)
- * - Bookmark icon (add/remove favorite)
- * - View Details button
- * - Optional: Recommendation Score / Similarity Score
- * - Optional: Extra action button (e.g. Find Available Alternatives)
+ * Backward compatibility wrapper for existing usages of Cover.
+ * Delegates to BookCover to guarantee universal consistency.
+ */
+export function Cover(props) {
+  return <BookCover {...props} />;
+}
+
+/**
+ * Universal Standard BookCard used across all pages of LibraAI:
+ * - Home (Top 5 & suggestions)
+ * - Get Recommendations
+ * - Book Search
+ * - Similar Books
+ * - Favorites
+ * - My Library (Recently Viewed, Saved, Currently Reading, Completed)
+ * - Availability
+ * - AI Reasoning
+ *
+ * Image is displayed completely inside the consistent frame,
+ * with text and actions cleanly separated below it.
  */
 export function BookCard({
   book,
@@ -154,10 +181,10 @@ export function BookCard({
         </div>
       </div>
 
-      <div className="book-card-cover-container">
-        <Cover src={book.image} alt={book.title} className="book-card-cover-img" />
-      </div>
+      {/* 2. Consistent dedicated book cover container with complete image visible */}
+      <BookCover src={book.image} alt={book.title} />
 
+      {/* 3. Text and actions clearly structured below the cover frame */}
       <div className="book-card-info-body">
         <h3 className="book-card-title" title={book.title}>
           {book.title}
@@ -241,7 +268,11 @@ export function SuggestionCard({ book, onSelect }) {
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onSelect?.(book)}
     >
-      <Cover src={book.image} alt={book.title} className="suggestion-thumb" />
+      <BookCover
+        src={book.image}
+        alt={book.title}
+        containerClassName="suggestion-thumb"
+      />
       <div className="suggestion-meta">
         <h4 className="suggestion-title" title={book.title}>
           {book.title}
@@ -282,7 +313,11 @@ export function RecommendationCard({ book, rank, onSelect }) {
     <article className="rec-card">
       <div className="rec-rank-badge">#{rank}</div>
       <div className="rec-card-cover-col">
-        <Cover src={book.image} alt={book.title} />
+        <BookCover
+          src={book.image}
+          alt={book.title}
+          containerClassName="rec-card-cover-wrap"
+        />
         <button
           type="button"
           className={`rec-fav-btn ${fav ? 'active' : ''}`}
