@@ -1850,15 +1850,134 @@ textarea {
 .reasoning-page {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.15rem;
   width: 100%;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
 }
 
+.reasoning-page .shared-page-header {
+  margin-bottom: 0;
+  padding-bottom: 0.85rem;
+}
+
 .reasoning-tabs-container {
   width: 100%;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.reasoning-tab-view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* ==========================================================================
+   Shared Tabs Navigation Bar (Modern Segmented Dock Design)
+   ========================================================================== */
+
+.shared-tabs-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: linear-gradient(180deg, #091A2E 0%, #05101C 100%);
+  border: 1px solid #16324F;
+  border-radius: 14px;
+  padding: 0.35rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.shared-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 0.7rem 1.35rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  outline: none;
+  position: relative;
+  user-select: none;
+}
+
+.shared-tab-btn:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+.shared-tab-btn.active {
+  color: #FFFFFF;
+  background: linear-gradient(180deg, #102B4B 0%, #091C32 100%);
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 16px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(56, 189, 248, 0.3);
+}
+
+.shared-tab-btn .tab-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.shared-tab-btn:hover .tab-icon {
+  color: var(--accent-light);
+}
+
+.shared-tab-btn.active .tab-icon {
+  color: var(--accent-cyan);
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6));
+}
+
+.shared-tab-btn .tab-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.shared-tab-btn.active .tab-label {
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.shared-tab-btn .tab-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: Consolas, monospace;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-dim);
+  transition: all 0.2s ease;
+  letter-spacing: 0.03em;
+}
+
+.shared-tab-btn:hover .tab-badge {
+  color: var(--text-muted);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.shared-tab-btn.active .tab-badge {
+  background: rgba(56, 189, 248, 0.16);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
 }
 
 /* ==========================================================================
