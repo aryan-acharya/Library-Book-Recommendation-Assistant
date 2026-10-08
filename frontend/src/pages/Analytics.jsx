@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { getAnalytics } from '../libraryStore';
+import { PageHeader, EmptyState } from '../components/UIComponents';
 
 export default function Analytics() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
@@ -18,45 +20,35 @@ export default function Analytics() {
 
   return (
     <div className="analytics-page">
-      <header className="page-header-strip">
-        <div className="header-titles">
-          <h1>Reader &amp; AI System Analytics</h1>
-          <p>
-            Real user activity metrics computed from your interactions: recommendations generated, books viewed, saved favorites, and reading progression.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title="Reader &amp; AI System Analytics"
+        description="Real user activity metrics computed from your interactions: recommendations generated, books viewed, saved favorites, and reading progression."
+        icon={
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+        }
+      />
 
       {!stats.hasActivity ? (
-        <div className="empty-state-card">
-          <div className="empty-icon">📊</div>
-          <h3>Not enough activity yet</h3>
-          <p>
-            Explore recommendations on the Home page, bookmark books to your library, or start a study plan to see your real reading metrics and AI interaction stats here.
-          </p>
-          <div style={{ marginTop: '1.2rem' }}>
-            <Link to="/" className="btn-small-primary">
-              Discover Books on Home →
-            </Link>
-          </div>
-        </div>
+        <EmptyState
+          icon="📊"
+          title="Not enough activity yet."
+          message="Explore recommendations on the Home page, bookmark books to your library, or start a study plan to see your real reading metrics and AI interaction stats here."
+          actionText="Discover Books on Home"
+          onAction={() => navigate('/')}
+        />
       ) : (
         <div className="analytics-content-grid">
-          {/* Top KPI Metrics */}
+          {/* Top KPI Metrics: 4 Primary Cards required */}
           <div className="kpi-grid">
-            <div className="kpi-card">
-              <span className="kpi-icon">⚡</span>
-              <div className="kpi-data">
-                <strong className="kpi-num">{stats.totalRecommendations}</strong>
-                <span className="kpi-label">AI Recommendations Run</span>
-              </div>
-            </div>
-
             <div className="kpi-card">
               <span className="kpi-icon">📖</span>
               <div className="kpi-data">
                 <strong className="kpi-num">{stats.booksViewed}</strong>
-                <span className="kpi-label">Books Explored</span>
+                <span className="kpi-label">Books Viewed</span>
               </div>
             </div>
 
@@ -64,28 +56,37 @@ export default function Analytics() {
               <span className="kpi-icon">♥</span>
               <div className="kpi-data">
                 <strong className="kpi-num">{stats.favoritesCount}</strong>
-                <span className="kpi-label">Saved Favorites</span>
+                <span className="kpi-label">Favorites</span>
               </div>
             </div>
 
             <div className="kpi-card">
-              <span className="kpi-icon">★</span>
+              <span className="kpi-icon">⚡</span>
               <div className="kpi-data">
-                <strong className="kpi-num">
-                  {stats.averageSavedRating ? stats.averageSavedRating.toFixed(2) : '—'}
-                </strong>
-                <span className="kpi-label">Avg Saved Book Rating</span>
+                <strong className="kpi-num">{stats.totalRecommendations}</strong>
+                <span className="kpi-label">Recommendations Generated</span>
+              </div>
+            </div>
+
+            <div className="kpi-card">
+              <span className="kpi-icon">📚</span>
+              <div className="kpi-data">
+                <strong className="kpi-num">{stats.favoritesCount + (stats.studyPlansCount || 0)}</strong>
+                <span className="kpi-label">Books Saved</span>
               </div>
             </div>
           </div>
 
           <div className="analytics-charts-grid">
-            {/* Favorite Genres Distribution */}
+            {/* Chart 1: Favorite Genres Distribution */}
             <div className="chart-card">
-              <h3>Top Preferred Genres</h3>
-              <p className="chart-sub">Computed from saved favorites and explored books</p>
+              <div className="chart-card-header">
+                <h3>Favorite Genres</h3>
+                <span className="chart-sub">From bookmarks &amp; explored books</span>
+              </div>
+
               {stats.favoriteGenres.length === 0 ? (
-                <p className="empty-text">No genre preferences recorded yet.</p>
+                <p className="empty-chart-text">No genre preferences recorded yet.</p>
               ) : (
                 <div className="bars-list">
                   {stats.favoriteGenres.slice(0, 6).map((item) => {
@@ -107,12 +108,15 @@ export default function Analytics() {
               )}
             </div>
 
-            {/* Favorite Moods Distribution */}
+            {/* Chart 2: Favorite Moods Distribution */}
             <div className="chart-card">
-              <h3>Top Preferred Moods</h3>
-              <p className="chart-sub">Computed from candidate interactions and bookmarks</p>
+              <div className="chart-card-header">
+                <h3>Favorite Moods</h3>
+                <span className="chart-sub">From preference filters &amp; selections</span>
+              </div>
+
               {stats.favoriteMoods.length === 0 ? (
-                <p className="empty-text">No mood preferences recorded yet.</p>
+                <p className="empty-chart-text">No mood preferences recorded yet.</p>
               ) : (
                 <div className="bars-list">
                   {stats.favoriteMoods.slice(0, 6).map((item) => {
@@ -135,37 +139,72 @@ export default function Analytics() {
             </div>
           </div>
 
-          {/* Reading Progress & Study Goals */}
-          <div className="analytics-study-card">
-            <div className="study-header">
-              <div>
-                <h3>Study Companion Progress</h3>
-                <p className="chart-sub">
-                  Overall completion percentage across all active reading schedules
-                </p>
+          {/* Reading Activity & Recommendation Activity Cards */}
+          <div className="analytics-activities-grid">
+            {/* Reading Activity */}
+            <div className="activity-card">
+              <div className="activity-header">
+                <div>
+                  <h3>Reading Activity</h3>
+                  <p className="chart-sub">
+                    Pace and daily targets tracked via Study Companion
+                  </p>
+                </div>
+                <span className="progress-badge">{stats.readingProgressPct}% Target Met</span>
               </div>
-              <span className="progress-badge">{stats.readingProgressPct}% Complete</span>
+
+              <div className="activity-progress-bar-wrap">
+                <div
+                  className="activity-progress-fill"
+                  style={{ width: `${stats.readingProgressPct}%` }}
+                ></div>
+              </div>
+
+              <div className="activity-metrics-row">
+                <div className="act-metric">
+                  <strong>{stats.studyPlansCount}</strong>
+                  <span>Active Plans</span>
+                </div>
+                <div className="act-metric">
+                  <strong>{stats.totalCompletedDays}</strong>
+                  <span>Days Completed</span>
+                </div>
+                <div className="act-metric">
+                  <strong>{stats.totalTargetDays}</strong>
+                  <span>Total Target Days</span>
+                </div>
+              </div>
             </div>
 
-            <div className="full-progress-bar-wrap">
-              <div
-                className="full-progress-fill"
-                style={{ width: `${stats.readingProgressPct}%` }}
-              ></div>
-            </div>
+            {/* Recommendation Activity */}
+            <div className="activity-card">
+              <div className="activity-header">
+                <div>
+                  <h3>Recommendation Activity</h3>
+                  <p className="chart-sub">
+                    Inference engine and quality rating tracking
+                  </p>
+                </div>
+                <span className="quality-badge">
+                  {stats.averageSavedRating ? `★ ${stats.averageSavedRating.toFixed(2)}` : '★ High Quality'}
+                </span>
+              </div>
 
-            <div className="study-summary-numbers">
-              <div className="num-box">
-                <strong>{stats.studyPlansCount}</strong>
-                <span>Active Schedules</span>
-              </div>
-              <div className="num-box">
-                <strong>{stats.totalCompletedDays}</strong>
-                <span>Days Completed</span>
-              </div>
-              <div className="num-box">
-                <strong>{stats.totalTargetDays}</strong>
-                <span>Total Target Days</span>
+              <div className="rec-activity-stats-grid">
+                <div className="rec-stat-box">
+                  <span className="rec-stat-num">{stats.totalRecommendations}</span>
+                  <span className="rec-stat-label">Inference Runs</span>
+                </div>
+                <div className="rec-stat-box">
+                  <span className="rec-stat-num">
+                    {stats.averageSavedRating ? stats.averageSavedRating.toFixed(2) : '—'}
+                  </span>
+                  <span className="rec-stat-label">Avg Saved Book Rating</span>
+                </div>
+                <div className="rec-stat-box">
+                  <span className="rec-stat-num">8</span>
+                  <span className="rec-stat-label">Hill Climbing Restarts</span>
+                </div>
               </div>
             </div>
           </div>

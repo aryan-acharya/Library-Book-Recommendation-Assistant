@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
-import { Cover } from '../components/BookComponents';
+import { BookCard, Cover } from '../components/BookComponents';
 import BookDetailsModal from '../components/BookDetailsModal';
-import { isFavorite, toggleFavorite } from '../libraryStore';
+import { EmptyState, ErrorState, LoadingState, PageHeader } from '../components/UIComponents';
 
 export default function SimilarBooks() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -13,6 +13,7 @@ export default function SimilarBooks() {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [selectedModalBook, setSelectedModalBook] = useState(null);
 
   const initialBookId = searchParams.get('bookId') || 'B07470'; // Default to "The Silent Patient"
@@ -30,6 +31,7 @@ export default function SimilarBooks() {
       setTargetBook(data.book);
       setSimilarList(data.similar || []);
     } catch (err) {
+      console.error('Similar books load error:', err);
       setError(err.message || 'Failed to load similar books.');
     } finally {
       setLoading(false);
@@ -38,12 +40,16 @@ export default function SimilarBooks() {
 
   async function handleBookSearch(e) {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
+    const q = searchQuery.trim();
+    if (!q) return;
+    setSearchLoading(true);
     try {
-      const res = await api.search(searchQuery.trim(), 1, 6);
+      const res = await api.search(q, 1, 6);
       setSearchResults(res.books || []);
     } catch {
       setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
     }
   }
 
@@ -55,149 +61,176 @@ export default function SimilarBooks() {
   }
 
   return (
-    <div className="similar-books-page">
-      <header className="page-header-strip">
-        <div className="header-titles">
-          <h1>Similar Books Explorer</h1>
-          <p>
-            Find books semantically and structurally related to any title using shared genres, subgenres, moods, themes, and keywords.
-          </p>
-        </div>
+    <div className="similar-books-page-container">
+      {/* 1. Header */}
+      <PageHeader
+        title="Similar Books"
+        accentText="Explorer"
+        description="Find books semantically and structurally related to any title using shared genres, subgenres, moods, themes, and keywords."
+        icon="🔗"
+      />
 
-        {/* Quick Search to Pick Book */}
-        <form className="similar-search-form" onSubmit={handleBookSearch}>
-          <input
-            type="text"
-            placeholder="Change base book (e.g. Verity, Dune)..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <button type="submit" className="btn-small-primary">Search</button>
-        </form>
-      </header>
-
-      {/* Search dropdown results if searching */}
-      {searchResults.length > 0 ? (
-        <div className="similar-search-dropdown-results">
-          <div className="results-head">Select a base book:</div>
-          <div className="results-grid-compact">
-            {searchResults.map((b) => (
-              <div
-                key={b.id}
-                className="compact-select-card"
-                onClick={() => handleSelectBook(b)}
-              >
-                <Cover src={b.image} alt={b.title} className="thumb" />
-                <div className="text">
-                  <strong>{b.title}</strong>
-                  <span>{b.author} · {b.genre}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {/* Target Book Spotlight */}
-      {targetBook ? (
-        <div className="target-book-banner">
-          <div className="target-book-cover-wrap">
-            <Cover src={targetBook.image} alt={targetBook.title} className="target-cover" />
-          </div>
-          <div className="target-book-details">
-            <span className="badge-pill">Target Base Book</span>
-            <h2>{targetBook.title}</h2>
-            <p className="author">by {targetBook.author}</p>
-            <div className="tags-row">
-              <span className="pill">{targetBook.genre}</span>
-              <span className="pill">{targetBook.mood}</span>
-              <span className="pill">{targetBook.readingLevel}</span>
-              <span className="pill rating">★ {targetBook.score}</span>
+      {/* 2. Base Book Picker & Spotlight */}
+      <section className="similar-picker-card">
+        <div className="picker-header-row">
+          <div className="picker-title-group">
+            <span className="picker-icon">🎯</span>
+            <div>
+              <h3>Choose a Base Book</h3>
+              <p>Search any book in the Knowledge Base to compute its closest semantic neighbors</p>
             </div>
-            <p className="desc">{targetBook.description?.slice(0, 240)}...</p>
           </div>
-        </div>
-      ) : null}
 
+          <form className="similar-search-input-form" onSubmit={handleBookSearch}>
+            <input
+              type="text"
+              placeholder="Search by title or author (e.g. Verity, Dune)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button type="submit" className="btn-small-primary" disabled={searchLoading}>
+              {searchLoading ? 'Searching…' : 'Search'}
+            </button>
+          </form>
+        </div>
+
+        {/* Search Results Dropdown / Picker */}
+        {searchResults.length > 0 ? (
+          <div className="similar-search-dropdown-results">
+            <div className="results-head">Click a book to set as base:</div>
+            <div className="results-grid-compact">
+              {searchResults.map((b) => (
+                <div
+                  key={b.id}
+                  className="compact-select-card"
+                  onClick={() => handleSelectBook(b)}
+                >
+                  <Cover src={b.image} alt={b.title} className="thumb" />
+                  <div className="text">
+                    <strong>{b.title}</strong>
+                    <span>
+                      {b.author} · {b.genre} · ★ {b.score}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {/* Spotlight on Base Book */}
+        {targetBook ? (
+          <div className="target-book-banner-card">
+            <div className="target-book-cover-wrap">
+              <Cover src={targetBook.image} alt={targetBook.title} className="target-cover" />
+            </div>
+
+            <div className="target-book-details">
+              <div className="target-badges-row">
+                <span className="badge-pill active-base">Active Base Book</span>
+                <span className="badge-pill">{targetBook.genre}</span>
+                {targetBook.mood && targetBook.mood !== 'Neutral' ? (
+                  <span className="badge-pill">{targetBook.mood} Mood</span>
+                ) : null}
+                <span className="badge-pill rating">★ {targetBook.score}</span>
+              </div>
+
+              <h2 className="target-title">{targetBook.title}</h2>
+              <p className="target-author">by {targetBook.author}</p>
+
+              <p className="target-desc">
+                {targetBook.description
+                  ? `${targetBook.description.slice(0, 240)}...`
+                  : 'No extended description available in catalog.'}
+              </p>
+
+              {targetBook.themes && targetBook.themes.length > 0 ? (
+                <div className="target-themes-row">
+                  <span className="theme-label">Key Themes:</span>
+                  {targetBook.themes.slice(0, 4).map((t) => (
+                    <span key={t} className="tag-pill">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </section>
+
+      {/* 3. Loading State */}
       {loading ? (
-        <div className="loading-state-banner">
-          <div className="loading-pulse-spinner"></div>
-          <p>Computing semantic and attribute similarities across 10,538 books...</p>
-        </div>
+        <LoadingState message="Computing attribute & semantic similarities across the catalog..." />
       ) : null}
 
-      {error ? <div className="error-alert-card">{error}</div> : null}
+      {/* 4. Error State */}
+      {error && !loading ? (
+        <ErrorState
+          error={error}
+          onRetry={() => loadSimilar(initialBookId)}
+          onBack={() => loadSimilar('B07470')}
+        />
+      ) : null}
 
-      {/* Similar Books Grid */}
-      {!loading && similarList.length > 0 ? (
+      {/* 5. Similar Books Results Section */}
+      {!loading && !error && similarList.length > 0 ? (
         <section className="similar-results-section">
-          <h2>Books Similar to “{targetBook?.title}”</h2>
+          <div className="results-header-bar">
+            <h2>
+              Books Semantically Similar to “{targetBook?.title}”
+            </h2>
+            <span className="page-summary-tag">{similarList.length} Related Books Found</span>
+          </div>
+
           <div className="similar-books-grid">
             {similarList.map((book) => {
-              const fav = isFavorite(book.id);
-              return (
-                <div
-                  key={book.id}
-                  className="similar-book-card"
-                  onClick={() => setSelectedModalBook(book)}
-                >
-                  <div className="card-top-badges">
-                    <span className="similarity-badge">
-                      {book.similarityScore}% Match
+              // Build shared signals element to attach into standard card
+              const sharedSignals = (
+                <div className="shared-signals-wrap">
+                  {book.sharedGenre ? (
+                    <span className="signal-chip match">✓ Same Genre ({book.genre})</span>
+                  ) : null}
+                  {book.sharedMood ? (
+                    <span className="signal-chip match">✓ Same Mood ({book.mood})</span>
+                  ) : null}
+                  {(book.sharedThemes || []).slice(0, 1).map((t) => (
+                    <span key={t} className="signal-chip">
+                      Theme: {t}
                     </span>
-                    <button
-                      type="button"
-                      className={`fav-btn-icon ${fav ? 'active' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(book);
-                      }}
-                      title={fav ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                      {fav ? '♥' : '♡'}
-                    </button>
-                  </div>
-
-                  <div className="cover-wrap">
-                    <Cover src={book.image} alt={book.title} />
-                  </div>
-
-                  <div className="similar-card-body">
-                    <h3 title={book.title}>{book.title}</h3>
-                    <p className="author">{book.author}</p>
-                    <div className="rating-row">
-                      <span className="star">★</span>
-                      <span>{book.score}</span>
-                      <span className="dot">·</span>
-                      <span className={`status-pill-small ${book.availability?.toLowerCase()}`}>
-                        {book.availability}
-                      </span>
-                    </div>
-
-                    <div className="shared-signals">
-                      {book.sharedGenre ? (
-                        <span className="signal-chip match">✓ Same Genre ({book.genre})</span>
-                      ) : null}
-                      {book.sharedMood ? (
-                        <span className="signal-chip match">✓ Same Mood ({book.mood})</span>
-                      ) : null}
-                      {(book.sharedThemes || []).slice(0, 2).map((t) => (
-                        <span key={t} className="signal-chip">Theme: {t}</span>
-                      ))}
-                      {(book.sharedKeywords || []).slice(0, 2).map((k) => (
-                        <span key={k} className="signal-chip subtle">#{k}</span>
-                      ))}
-                    </div>
-                  </div>
+                  ))}
                 </div>
+              );
+
+              return (
+                <BookCard
+                  key={book.id}
+                  book={book}
+                  similarity={book.similarityScore}
+                  extraAction={sharedSignals}
+                  onSelect={(b) => setSelectedModalBook(b)}
+                />
               );
             })}
           </div>
         </section>
       ) : null}
 
+      {/* 6. Empty State */}
+      {!loading && !error && similarList.length === 0 && targetBook ? (
+        <EmptyState
+          icon="🔗"
+          title="No closely related books found"
+          message="No books in the Knowledge Base matched enough shared attributes with this title. Try picking another base book."
+          actionText="Pick The Silent Patient"
+          onAction={() => handleSelectBook({ id: 'B07470' })}
+        />
+      ) : null}
+
+      {/* 7. Book Details Modal */}
       {selectedModalBook ? (
         <BookDetailsModal
+          bookId={selectedModalBook.id}
           bookData={selectedModalBook}
           onClose={() => setSelectedModalBook(null)}
         />

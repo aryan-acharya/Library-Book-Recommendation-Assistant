@@ -3,15 +3,18 @@ import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { BookCard } from '../components/BookComponents';
 import BookDetailsModal from '../components/BookDetailsModal';
+import { EmptyState, ErrorState, LoadingState, PageHeader } from '../components/UIComponents';
 import { trackActivity } from '../libraryStore';
 
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [genre, setGenre] = useState('');
+  const [author, setAuthor] = useState('');
   const [mood, setMood] = useState('');
   const [minRating, setMinRating] = useState('');
   const [readingLevel, setReadingLevel] = useState('');
+  const [length, setLength] = useState('');
   const [availability, setAvailability] = useState('');
   const [yearFrom, setYearFrom] = useState('');
   const [yearTo, setYearTo] = useState('');
@@ -24,17 +27,19 @@ export default function Search() {
   const [selectedBook, setSelectedBook] = useState(null);
 
   useEffect(() => {
-    api.meta().then(setMeta).catch(() => {});
+    api
+      .meta()
+      .then(setMeta)
+      .catch((e) => console.warn('Could not load metadata:', e.message));
   }, []);
 
-  // Run search when URL query changes or on initial mount if query exists
+  // Run search when URL query changes or on initial mount
   useEffect(() => {
     const q = searchParams.get('q');
-    if (q) {
+    if (q !== null && q !== undefined) {
       setQuery(q);
       executeSearch(q, 1);
     } else {
-      // Show initial catalog search
       executeSearch('', 1);
     }
   }, [searchParams]);
@@ -46,16 +51,16 @@ export default function Search() {
 
     try {
       let result;
-      const trimmed = (searchText ?? query).trim();
+      const trimmed = (searchText !== undefined ? searchText : query).trim();
 
       if (trimmed) {
         trackActivity('search_performed', { query: trimmed });
       }
 
-      if (
-        !trimmed &&
-        (genre || mood || minRating || readingLevel || availability || yearFrom || yearTo)
-      ) {
+      const hasSecondaryFilters =
+        genre || author || mood || minRating || readingLevel || length || availability || yearFrom || yearTo;
+
+      if (!trimmed && hasSecondaryFilters) {
         // Use filter_books endpoint
         const params = {
           page: targetPage,
@@ -68,18 +73,37 @@ export default function Search() {
         if (availability) params.availability = availability;
         if (yearFrom) params.publishedFrom = yearFrom;
         if (yearTo) params.publishedTo = yearTo;
+
         result = await api.books(params);
         result.query = 'Filtered Catalog';
+
+        // Additional client-side filters for author and length
+        if (author || length) {
+          result.books = (result.books || []).filter((b) => {
+            if (author && !(b.author || '').toLowerCase().includes(author.toLowerCase())) {
+              return false;
+            }
+            if (length && (b.length || '').toLowerCase() !== length.toLowerCase()) {
+              return false;
+            }
+            return true;
+          });
+        }
       } else if (trimmed) {
         result = await api.search(trimmed, targetPage, 20);
-        // Apply client filters if secondary filters are chosen
-        if (genre || mood || minRating || readingLevel || availability) {
+
+        // Apply secondary filters on search matches
+        if (hasSecondaryFilters) {
           result.books = (result.books || []).filter((b) => {
             if (genre && (b.genre || '').toLowerCase() !== genre.toLowerCase()) return false;
+            if (author && !(b.author || '').toLowerCase().includes(author.toLowerCase())) return false;
             if (mood && (b.mood || '').toLowerCase() !== mood.toLowerCase()) return false;
             if (minRating && Number(b.score) < Number(minRating)) return false;
             if (readingLevel && (b.readingLevel || '').toLowerCase() !== readingLevel.toLowerCase()) return false;
+            if (length && (b.length || '').toLowerCase() !== length.toLowerCase()) return false;
             if (availability && (b.availability || '').toLowerCase() !== availability.toLowerCase()) return false;
+            if (yearFrom && Number(b.published) < Number(yearFrom)) return false;
+            if (yearTo && Number(b.published) > Number(yearTo)) return false;
             return true;
           });
         }
@@ -90,7 +114,8 @@ export default function Search() {
 
       setData(result);
     } catch (err) {
-      setError(err.message || 'Search failed');
+      console.error('Search error:', err);
+      setError(err.message || 'Search failed. Please check backend connection.');
     } finally {
       setLoading(false);
     }
@@ -98,19 +123,19 @@ export default function Search() {
 
   function handleFormSubmit(e) {
     e.preventDefault();
-    if (query.trim()) {
-      setSearchParams({ q: query.trim() });
-    }
-    executeSearch(query, 1);
+    const q = query.trim();
+    setSearchParams(q ? { q } : {});
+    executeSearch(q, 1);
   }
 
   function handleResetFilters() {
     setGenre('');
+    setAuthor('');
     setMood('');
     setMinRating('');
     setReadingLevel('');
-    setAvailability('');
     setLength('');
+    setAvailability('');
     setYearFrom('');
     setYearTo('');
     setQuery('');
@@ -120,160 +145,225 @@ export default function Search() {
 
   return (
     <div className="search-page-container">
-      <header className="page-header-strip">
-        <div className="header-titles">
-          <h1>Library Book Search</h1>
-          <p>
-            Search and filter through all 10,538 titles by title, author, genre, mood, reading level, circulation availability, and publication period.
-          </p>
-        </div>
-      </header>
+      {/* 1. Header */}
+      <PageHeader
+        title="Book"
+        accentText="Search"
+        description="Explore the library and discover your next read across 10,538 titles with instant keyword lookup and deep attribute filters."
+        icon="🔍"
+      />
 
-      {/* Main Search Bar */}
-      <form className="advanced-search-form" onSubmit={handleFormSubmit}>
-        <div className="search-input-wrapper-large">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
+      {/* 2. Main Search Bar & Filters Card */}
+      <form className="advanced-search-card" onSubmit={handleFormSubmit}>
+        <div className="search-bar-primary">
+          <span className="search-bar-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
           <input
             type="text"
-            className="search-input-large"
+            className="search-bar-input"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by title, author, keywords, or topics (e.g. Artificial Intelligence, Agatha Christie)..."
+            placeholder="Search books, authors, genres, keywords (e.g. Mystery, Agatha Christie, AI)..."
           />
-          <button type="submit" className="btn-search-primary" disabled={loading}>
+          <button type="submit" className="btn-search-cta" disabled={loading}>
             {loading ? 'Searching…' : 'Search Books'}
           </button>
         </div>
 
-        {/* Filter Strip */}
-        <div className="search-filters-row">
-          <select value={genre} onChange={(e) => setGenre(e.target.value)}>
-            <option value="">All Genres</option>
-            {(meta?.genres || []).map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
+        {/* Structured Multi-attribute Filters Row */}
+        <div className="search-filters-grid">
+          <div className="filter-item">
+            <label>Genre</label>
+            <select value={genre} onChange={(e) => setGenre(e.target.value)}>
+              <option value="">All Genres</option>
+              {(meta?.genres || []).map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <select value={mood} onChange={(e) => setMood(e.target.value)}>
-            <option value="">All Moods</option>
-            {(meta?.moods || []).map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
+          <div className="filter-item">
+            <label>Author</label>
+            <input
+              type="text"
+              placeholder="e.g. Stephen King"
+              value={author}
+              onChange={(e) => setAuthor(e.target.value)}
+            />
+          </div>
 
-          <select value={minRating} onChange={(e) => setMinRating(e.target.value)}>
-            <option value="">Any Rating</option>
-            <option value="3.0">3.0+ Stars</option>
-            <option value="3.5">3.5+ Stars</option>
-            <option value="4.0">4.0+ Stars</option>
-            <option value="4.5">4.5+ Stars</option>
-          </select>
+          <div className="filter-item">
+            <label>Mood</label>
+            <select value={mood} onChange={(e) => setMood(e.target.value)}>
+              <option value="">All Moods</option>
+              {(meta?.moods || []).map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <select value={readingLevel} onChange={(e) => setReadingLevel(e.target.value)}>
-            <option value="">All Difficulty Levels</option>
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
-          </select>
+          <div className="filter-item">
+            <label>Minimum Rating</label>
+            <select value={minRating} onChange={(e) => setMinRating(e.target.value)}>
+              <option value="">Any Rating</option>
+              <option value="3.0">3.0+ Stars</option>
+              <option value="3.5">3.5+ Stars</option>
+              <option value="4.0">4.0+ Stars</option>
+              <option value="4.5">4.5+ Stars</option>
+            </select>
+          </div>
 
-          <select value={availability} onChange={(e) => setAvailability(e.target.value)}>
-            <option value="">All Availabilities</option>
-            <option value="Available">Available</option>
-            <option value="Limited">Limited</option>
-            <option value="Unavailable">Unavailable</option>
-          </select>
+          <div className="filter-item">
+            <label>Difficulty</label>
+            <select value={readingLevel} onChange={(e) => setReadingLevel(e.target.value)}>
+              <option value="">All Levels</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </div>
 
-          <input
-            type="number"
-            className="year-filter-input"
-            placeholder="From Year"
-            value={yearFrom}
-            onChange={(e) => setYearFrom(e.target.value)}
-          />
+          <div className="filter-item">
+            <label>Length</label>
+            <select value={length} onChange={(e) => setLength(e.target.value)}>
+              <option value="">Any Length</option>
+              <option value="Short">Short</option>
+              <option value="Medium">Medium</option>
+              <option value="Long">Long</option>
+            </select>
+          </div>
 
-          <input
-            type="number"
-            className="year-filter-input"
-            placeholder="To Year"
-            value={yearTo}
-            onChange={(e) => setYearTo(e.target.value)}
-          />
+          <div className="filter-item">
+            <label>Availability</label>
+            <select value={availability} onChange={(e) => setAvailability(e.target.value)}>
+              <option value="">All Statuses</option>
+              <option value="Available">Available</option>
+              <option value="Limited">Limited</option>
+              <option value="Unavailable">Unavailable</option>
+            </select>
+          </div>
 
-          <button
-            type="button"
-            className="btn-filter-reset"
-            onClick={handleResetFilters}
-            title="Reset all filters"
-          >
-            Reset
-          </button>
+          <div className="filter-item year-range">
+            <label>Publication Year</label>
+            <div className="year-inputs-pair">
+              <input
+                type="number"
+                placeholder="From"
+                value={yearFrom}
+                onChange={(e) => setYearFrom(e.target.value)}
+              />
+              <span className="year-separator">–</span>
+              <input
+                type="number"
+                placeholder="To"
+                value={yearTo}
+                onChange={(e) => setYearTo(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="filter-item reset-col">
+            <label>&nbsp;</label>
+            <button
+              type="button"
+              className="btn-filter-reset"
+              onClick={handleResetFilters}
+              title="Reset all filters"
+            >
+              Reset All
+            </button>
+          </div>
         </div>
       </form>
 
-      {error ? <div className="error-alert-card">{error}</div> : null}
+      {/* 3. Loading State */}
+      {loading ? <LoadingState message="Searching digital collection..." /> : null}
 
-      {loading ? (
-        <div className="loading-state-banner">
-          <div className="loading-pulse-spinner"></div>
-          <p>Searching digital collection...</p>
-        </div>
+      {/* 4. Error State */}
+      {error && !loading ? (
+        <ErrorState
+          error={error}
+          onRetry={() => executeSearch(query, page)}
+          onBack={handleResetFilters}
+        />
       ) : null}
 
-      {data ? (
+      {/* 5. Results Section */}
+      {!loading && !error && data ? (
         <div className="search-results-section">
-          <div className="search-results-header">
-            <h2>
-              {data.total?.toLocaleString?.() || 0} Books Found
-              {data.query && data.query !== 'All Books' ? ` for “${data.query}”` : ''}
-            </h2>
-            <span className="page-summary">
-              Page {data.page || page} of {data.pages || 1}
-            </span>
+          <div className="results-header-bar">
+            <div className="results-count-title">
+              <h2>
+                {data.books?.length === 0 ? '0' : data.total?.toLocaleString?.() || data.books?.length || 0} Books Found
+                {query ? ` for “${query}”` : ''}
+              </h2>
+              <span className="page-summary-tag">
+                Page {data.page || page} of {data.pages || 1}
+              </span>
+            </div>
           </div>
 
-          <div className="search-books-grid">
-            {(data.books || []).map((book) => (
-              <BookCard
-                key={book.id}
-                book={book}
-                onSelect={() => setSelectedBook(book)}
-              />
-            ))}
-          </div>
+          {(!data.books || data.books.length === 0) ? (
+            <EmptyState
+              icon="🔎"
+              title="No books match your search"
+              message="Try broadening your keywords, lowering the minimum rating threshold, or resetting your attribute filters."
+              actionText="Reset All Filters"
+              onAction={handleResetFilters}
+            />
+          ) : (
+            <>
+              <div className="search-books-grid">
+                {data.books.map((book) => (
+                  <BookCard
+                    key={book.id}
+                    book={book}
+                    onSelect={(b) => setSelectedBook(b)}
+                  />
+                ))}
+              </div>
 
-          <div className="pagination-bar">
-            <button
-              type="button"
-              className="btn-page"
-              disabled={page <= 1}
-              onClick={() => executeSearch(query, page - 1)}
-            >
-              Previous
-            </button>
-            <span className="page-indicator">
-              Page {page} / {data.pages || 1}
-            </span>
-            <button
-              type="button"
-              className="btn-page"
-              disabled={page >= (data.pages || 1)}
-              onClick={() => executeSearch(query, page + 1)}
-            >
-              Next
-            </button>
-          </div>
+              {/* Pagination Controls */}
+              {(data.pages || 1) > 1 ? (
+                <div className="search-pagination-bar">
+                  <button
+                    type="button"
+                    className="btn-pagination"
+                    disabled={page <= 1}
+                    onClick={() => executeSearch(query, page - 1)}
+                  >
+                    ← Previous
+                  </button>
+                  <span className="pagination-text">
+                    Page {page} of {data.pages || 1}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn-pagination"
+                    disabled={page >= (data.pages || 1)}
+                    onClick={() => executeSearch(query, page + 1)}
+                  >
+                    Next →
+                  </button>
+                </div>
+              ) : null}
+            </>
+          )}
         </div>
       ) : null}
 
+      {/* 6. Book Details Modal */}
       {selectedBook ? (
         <BookDetailsModal
+          bookId={selectedBook.id}
           bookData={selectedBook}
           onClose={() => setSelectedBook(null)}
         />

@@ -1,147 +1,85 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
+import { PageHeader } from '../components/UIComponents';
 
 const workflow = [
-  'USER',
-  'USER PREFERENCES',
-  'FACT REPRESENTATION',
-  'KNOWLEDGE BASE',
-  'RULE-BASED SYSTEM',
-  'FORWARD / BACKWARD CHAINING',
-  'CANDIDATE BOOKS',
-  'RECOMMENDATION SCORE',
-  'HILL CLIMBING',
-  'NEIGHBOR SEARCH',
-  'RANDOM RESTARTS',
-  'TOP 5 BOOKS',
-  'EXPLANATION',
+  'User Preferences',
+  'Fact Extraction',
+  'Knowledge Base Match',
+  'Rule Evaluation (R1–R10)',
+  'Forward / Backward Chaining',
+  'Candidate Selection',
+  'Objective Scoring',
+  'Hill Climbing Local Search',
+  'Random Restarts',
+  'Top 5 Recommendations',
 ];
 
 export default function HowAIWorks() {
-  const [rules, setRules] = useState([]);
   const [fol, setFol] = useState([]);
 
   useEffect(() => {
     api.rules().then((data) => {
-      setRules(data.rules || []);
       setFol(data.folExamples || []);
     });
   }, []);
 
   return (
-    <section className="how-page">
-      <header className="section-head">
-        <h1>How AI Works</h1>
-        <p>
-          LibraAI is an explainable intelligent assistant. It does not use an external LLM for core reasoning. All
-          inference runs in Python on the Knowledge Base.
-        </p>
-      </header>
+    <div className="how-page">
+      <PageHeader
+        title="How AI Works in LibraAI"
+        description="LibraAI is a pure symbolic, explainable intelligent assistant. It does not use opaque third-party black-box LLMs for core recommendation. All inference executes deterministically in Python using Rule-Based Reasoning and Hill Climbing search."
+        icon={
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        }
+      />
 
-      <div className="workflow">
-        {workflow.map((step, i) => (
-          <div key={step} className="workflow-step">
-            <span>{step}</span>
-            {i < workflow.length - 1 ? <div className="arrow">↓</div> : null}
-          </div>
-        ))}
+      <div className="workflow-card">
+        <h3>End-to-End Decision Flow</h3>
+        <div className="workflow-steps-chain">
+          {workflow.map((step, i) => (
+            <div key={step} className="workflow-step-node">
+              <span className="step-badge">{i + 1}</span>
+              <span className="step-name">{step}</span>
+              {i < workflow.length - 1 && <span className="arrow-next">→</span>}
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="explain-grid">
         <article className="panel">
-          <h2>Intelligent Agent</h2>
+          <h2>1. Intelligent Agent &amp; PEAS</h2>
           <p>
-            LibraAI receives preferences, observes the library Knowledge Base, reasons with rules, searches candidate
-            solutions, and produces ranked recommendations with explanations.
+            LibraAI receives user criteria as percepts, queries its digital library environment, evaluates candidate states using an objective recommendation scoring function, and produces explainable recommendations as agent actions.
           </p>
         </article>
-        <article className="panel">
-          <h2>PEAS</h2>
-          <p>
-            Performance measures relevance and explanation quality. The environment is the digital library. Sensors are
-            preference inputs. Actuators are recommendations and reasoning traces.
-          </p>
-        </article>
-        <article className="panel">
-          <h2>Knowledge Representation</h2>
-          <p>Books and preferences are stored as structured facts and simple FOL-style implications.</p>
-          <pre className="code-block">{fol.join('\n')}</pre>
-        </article>
-        <article className="panel">
-          <h2>Knowledge Base</h2>
-          <p>
-            The Knowledge Base is the full 10,538-book enriched CSV. Length and Availability are derived/simulated for
-            this academic prototype.
-          </p>
-        </article>
-        <article className="panel">
-          <h2>Rule-Based Reasoning</h2>
-          <p>IF–THEN rules match user facts to book attributes and derive new facts such as GenreMatch(book).</p>
-        </article>
-        <article className="panel">
-          <h2>Forward Chaining</h2>
-          <p>
-            Starts from known user facts and fires applicable rules to derive matches until no useful new facts remain.
-          </p>
-        </article>
-        <article className="panel">
-          <h2>Backward Chaining</h2>
-          <p>
-            Starts from the goal Recommend(Book) and works backward through subgoals like genre, mood, interest, and
-            rating matches.
-          </p>
-        </article>
-        <article className="panel">
-          <h2>Inference Engine</h2>
-          <p>
-            Coordinates facts → rules → chaining → candidates → scoring → hill climbing → final Top 5 ranking.
-          </p>
-        </article>
-        <article className="panel">
-          <h2>Hill Climbing Search</h2>
-          <p>
-            Hill Climbing is a local search optimization algorithm that starts from an initial candidate book and repeatedly evaluates its
-            neighborhood, moving strictly to a neighboring candidate with a higher recommendation score.
-          </p>
-          <p>
-            <strong>Objective Function:</strong> Evaluates Genre (×4), Interest (×4), Mood (×2), Reading Level (×2), Theme (×2),
-            Age Group (×1), Keywords (×1), Rating (×1), Publication (×1), Popularity (×1), and Availability (×1) up to 20 points.
-          </p>
-          <p>
-            <strong>Neighbor Definition:</strong> Meaningful affinity based on shared author, subgenre, genre, mood, themes, keywords,
-            and reading level — strictly <em>not</em> adjacent rows in the dataset.
-          </p>
-          <p>
-            <strong>Local Optimum vs Global Optimum:</strong> Hill Climbing stops when no neighboring candidate has a better score.
-            Because it can become trapped in a local optimum, LibraAI implements <strong>Random-Restart Hill Climbing</strong> (5–10 restarts)
-            to explore distinct candidate regions. It does <em>not</em> falsely claim to guarantee the globally best book.
-          </p>
-        </article>
-        <article className="panel">
-          <h2>Top 5 Recommendation Ranking</h2>
-          <p>
-            Unique local optima discovered across all random restarts (supplemented by high-scoring candidates if needed) are
-            ranked by recommendation score. The resulting Top 5 books are returned with dynamic, explainable justifications.
-          </p>
-        </article>
-      </div>
 
-      <h2>IF–THEN Rules</h2>
-      <div className="rule-cards">
-        {rules.map((rule) => (
-          <article key={rule.id} className="rule-card">
-            <h3>
-              {rule.id} – {rule.name}
-            </h3>
-            <p>
-              <strong>IF</strong> {rule.if}
-            </p>
-            <p>
-              <strong>THEN</strong> {rule.then}
-            </p>
-          </article>
-        ))}
+        <article className="panel">
+          <h2>2. Knowledge Representation (FOL)</h2>
+          <p>Books and user criteria are translated into predicate logic facts:</p>
+          <pre className="code-block">{fol.slice(0, 8).join('\n') || 'Genre(B00001, "Horror")\nMood(B00001, "Suspenseful")'}</pre>
+        </article>
+
+        <article className="panel">
+          <h2>3. Rule-Based Reasoning &amp; Chaining</h2>
+          <p>
+            <strong>Forward Chaining:</strong> Starts from known user facts (e.g. UserGenre, UserMood) and applies rules forward to derive matches.
+          </p>
+          <p>
+            <strong>Backward Chaining:</strong> Hypothesizes goal <code>Recommend(Book)</code> and proves prerequisites recursively.
+          </p>
+        </article>
+
+        <article className="panel">
+          <h2>4. ⛰️ Hill Climbing Search</h2>
+          <p>
+            Candidate solutions are navigated by inspecting semantic neighbors (shared genres, mood, themes, author). Moves occur only if a neighbor strictly improves recommendation score. <strong>Random restarts</strong> escape sub-optimal local plateaus.
+          </p>
+        </article>
       </div>
-    </section>
+    </div>
   );
 }

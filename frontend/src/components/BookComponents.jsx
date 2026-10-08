@@ -28,88 +28,155 @@ export function Cover({ src, alt, className = '' }) {
 }
 
 /**
- * TopBookCard: Primary card for Top 5 Recommendations on the Home Page.
- * Matches reference layout:
- * - Rank circle badge on top-left (#1)
- * - Bookmark icon button on top-right (add/remove favorite)
- * - Book cover
+ * Universal Standard BookCard used across all pages of LibraAI.
+ * Meets Requirement 29:
+ * - Rank (optional)
+ * - Cover
  * - Title
  * - Author
  * - Rating (★ 4.2)
- * - Badges (Genre / Subgenre / Themes)
- * - Availability dot (● Available / ● Limited)
+ * - Badges (Genre / Subgenre / Mood / Theme)
+ * - Availability dot (● Available / ● Limited / ● Unavailable)
+ * - Bookmark icon (add/remove favorite)
+ * - View Details button
+ * - Optional: Recommendation Score / Similarity Score
+ * - Optional: Extra action button (e.g. Find Available Alternatives)
  */
-export function TopBookCard({ book, rank, onSelect }) {
+export function BookCard({
+  book,
+  rank,
+  onSelect,
+  scoreBadge,
+  similarity,
+  extraAction,
+  onRemove,
+  className = '',
+}) {
   const [fav, setFav] = useState(false);
 
   useEffect(() => {
-    setFav(isFavorite(book?.id));
+    if (!book?.id) return;
+    setFav(isFavorite(book.id));
     function handleUpdate() {
-      setFav(isFavorite(book?.id));
+      setFav(isFavorite(book.id));
     }
     window.addEventListener('libraai_store_update', handleUpdate);
     return () => window.removeEventListener('libraai_store_update', handleUpdate);
   }, [book?.id]);
 
   function handleBookmark(e) {
+    e.preventDefault();
     e.stopPropagation();
     const updated = toggleFavorite(book);
     setFav(updated);
   }
 
-  const avail = book?.availability || 'Available';
-  const availClass = avail.toLowerCase() === 'limited' ? 'limited' : avail.toLowerCase() === 'unavailable' ? 'unavailable' : 'available';
+  if (!book) return null;
 
-  // Badges to display: genre + subgenre or first theme
+  const avail = book.availability || 'Available';
+  const availClass =
+    avail.toLowerCase() === 'limited'
+      ? 'limited'
+      : avail.toLowerCase() === 'unavailable' || avail.toLowerCase() === 'issued'
+      ? 'unavailable'
+      : 'available';
+
+  // Badges to display: genre + subgenre or first theme/mood
   const badges = [];
-  if (book?.genre && book.genre !== 'Unknown') badges.push(book.genre);
-  if (book?.subgenre && book.subgenre !== 'General' && book.subgenre !== book.genre) {
+  if (book.genre && book.genre !== 'Unknown') badges.push(book.genre);
+  if (book.subgenre && book.subgenre !== 'General' && book.subgenre !== book.genre) {
     badges.push(book.subgenre);
-  } else if (book?.themes && book.themes.length > 0 && book.themes[0] !== book.genre) {
+  } else if (book.themes && book.themes.length > 0 && book.themes[0] !== book.genre) {
     badges.push(book.themes[0]);
-  } else if (book?.mood && book.mood !== 'Neutral') {
+  } else if (book.mood && book.mood !== 'Neutral') {
     badges.push(book.mood);
   }
 
-  return (
+  const scoreText =
+    scoreBadge ||
+    (similarity !== undefined ? `${similarity}% Match` : null) ||
+    (book.recommendationScore !== undefined
+      ? `Score ${book.recommendationScore}/${book.maxScore || 20}`
+      : null);
+
+  const cardContent = (
     <div
-      className="top-book-card"
+      className={`universal-book-card ${className}`}
       onClick={() => onSelect?.(book)}
-      role="button"
-      tabIndex={0}
+      role={onSelect ? 'button' : undefined}
+      tabIndex={onSelect ? 0 : undefined}
       onKeyDown={(e) => e.key === 'Enter' && onSelect?.(book)}
     >
-      <div className="top-card-header">
-        <span className="rank-badge">{rank}</span>
-        <button
-          type="button"
-          className={`bookmark-btn ${fav ? 'favorited' : ''}`}
-          onClick={handleBookmark}
-          title={fav ? 'Remove from Favorites' : 'Add to Favorites'}
-          aria-label={fav ? 'Remove from Favorites' : 'Add to Favorites'}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill={fav ? '#38BDF8' : 'none'} stroke={fav ? '#38BDF8' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-          </svg>
-        </button>
-      </div>
-
-      <div className="top-card-cover-wrap">
-        <Cover src={book.image} alt={book.title} className="top-card-cover" />
-      </div>
-
-      <div className="top-card-info">
-        <h3 className="top-card-title" title={book.title}>
-          {book.title}
-        </h3>
-        <p className="top-card-author">{book.author}</p>
-
-        <div className="top-card-rating">
-          <span className="star">★</span>
-          <span className="rating-num">{book.score ? Number(book.score).toFixed(1) : '4.0'}</span>
+      <div className="book-card-top-bar">
+        <div className="card-top-left-badges">
+          {rank !== undefined && rank !== null ? (
+            <span className="rank-badge">#{rank}</span>
+          ) : null}
+          {scoreText ? <span className="score-badge-pill">{scoreText}</span> : null}
         </div>
 
-        <div className="top-card-badges">
+        <div className="card-top-actions">
+          {onRemove ? (
+            <button
+              type="button"
+              className="card-remove-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove(book);
+              }}
+              title="Remove from list"
+              aria-label="Remove from list"
+            >
+              ✕
+            </button>
+          ) : null}
+
+          <button
+            type="button"
+            className={`bookmark-btn ${fav ? 'favorited' : ''}`}
+            onClick={handleBookmark}
+            title={fav ? 'Remove from Favorites' : 'Add to Favorites'}
+            aria-label={fav ? 'Remove from Favorites' : 'Add to Favorites'}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill={fav ? '#38BDF8' : 'none'}
+              stroke={fav ? '#38BDF8' : 'currentColor'}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div className="book-card-cover-container">
+        <Cover src={book.image} alt={book.title} className="book-card-cover-img" />
+      </div>
+
+      <div className="book-card-info-body">
+        <h3 className="book-card-title" title={book.title}>
+          {book.title}
+        </h3>
+        <p className="book-card-author">{book.author}</p>
+
+        <div className="book-card-rating-line">
+          <span className="star-icon">★</span>
+          <span className="rating-value">
+            {book.score ? Number(book.score).toFixed(1) : '4.0'}
+          </span>
+          {book.ratings ? (
+            <span className="ratings-count">
+              ({Number(book.ratings).toLocaleString()})
+            </span>
+          ) : null}
+        </div>
+
+        <div className="book-card-tags-line">
           {badges.slice(0, 2).map((b) => (
             <span key={b} className="tag-pill">
               {b}
@@ -117,17 +184,53 @@ export function TopBookCard({ book, rank, onSelect }) {
           ))}
         </div>
 
-        <div className={`top-card-status ${availClass}`}>
+        <div className={`book-card-status-dot ${availClass}`}>
           <span className="status-dot"></span>
           <span>{avail}</span>
+        </div>
+
+        <div className="book-card-footer-actions">
+          <button
+            type="button"
+            className="btn-card-details"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect?.(book);
+            }}
+          >
+            View Details →
+          </button>
+
+          {extraAction ? (
+            <div className="extra-action-slot" onClick={(e) => e.stopPropagation()}>
+              {extraAction}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
   );
+
+  if (onSelect) {
+    return cardContent;
+  }
+
+  return (
+    <Link to={`/books/${book.id}`} className="card-link-wrapper">
+      {cardContent}
+    </Link>
+  );
 }
 
 /**
- * SuggestionCard: Compact card for the "Other Suggestions" row.
+ * TopBookCard: Retained for backwards compatibility, delegates to BookCard.
+ */
+export function TopBookCard({ book, rank, onSelect }) {
+  return <BookCard book={book} rank={rank} onSelect={onSelect} />;
+}
+
+/**
+ * SuggestionCard: Compact card for suggestions strips.
  */
 export function SuggestionCard({ book, onSelect }) {
   return (
@@ -154,87 +257,16 @@ export function SuggestionCard({ book, onSelect }) {
 }
 
 /**
- * Standard BookCard for search, explore, and lists.
+ * RecommendationCard: Detailed recommendation card used in AI Reasoning trace.
  */
-export function BookCard({ book, onSelect }) {
-  const [fav, setFav] = useState(false);
-
-  useEffect(() => {
-    setFav(isFavorite(book?.id));
-    function handleUpdate() {
-      setFav(isFavorite(book?.id));
-    }
-    window.addEventListener('libraai_store_update', handleUpdate);
-    return () => window.removeEventListener('libraai_store_update', handleUpdate);
-  }, [book?.id]);
-
-  function handleBookmark(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    const updated = toggleFavorite(book);
-    setFav(updated);
-  }
-
-  const content = (
-    <>
-      <div className="book-card-cover-wrap">
-        <Cover src={book.image} alt={book.title} />
-        <button
-          type="button"
-          className={`card-quick-fav ${fav ? 'active' : ''}`}
-          onClick={handleBookmark}
-          title={fav ? 'Remove from favorites' : 'Add to favorites'}
-        >
-          {fav ? '♥' : '♡'}
-        </button>
-      </div>
-      <div className="book-card-body">
-        <h3 title={book.title}>{book.title}</h3>
-        <p className="author">{book.author}</p>
-        <div className="meta-row">
-          <span className="card-genre">{book.genre}</span>
-          <span className="card-score">★ {book.score}</span>
-        </div>
-        <div className="card-footer-tags">
-          {book.availability ? (
-            <span className={`status-pill-small ${book.availability?.toLowerCase()}`}>
-              ● {book.availability}
-            </span>
-          ) : null}
-          {book.published ? <span className="muted-year">{book.published}</span> : null}
-        </div>
-      </div>
-    </>
-  );
-
-  if (onSelect) {
-    return (
-      <div
-        className="book-card"
-        onClick={() => onSelect(book)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => e.key === 'Enter' && onSelect(book)}
-      >
-        {content}
-      </div>
-    );
-  }
-
-  return (
-    <Link to={`/books/${book.id}`} className="book-card">
-      {content}
-    </Link>
-  );
-}
-
 export function RecommendationCard({ book, rank, onSelect }) {
   const [fav, setFav] = useState(false);
 
   useEffect(() => {
-    setFav(isFavorite(book?.id));
+    if (!book?.id) return;
+    setFav(isFavorite(book.id));
     function handleUpdate() {
-      setFav(isFavorite(book?.id));
+      setFav(isFavorite(book.id));
     }
     window.addEventListener('libraai_store_update', handleUpdate);
     return () => window.removeEventListener('libraai_store_update', handleUpdate);
@@ -317,39 +349,6 @@ export function RecommendationCard({ book, rank, onSelect }) {
             ))}
           </ul>
         </details>
-
-        {book.hillClimbingPath && book.hillClimbingPath.length > 0 ? (
-          <details>
-            <summary>
-              Hill Climbing Search Path {book.restartOrigin ? `(Restart ${book.restartOrigin})` : ''}
-            </summary>
-            <div className="card-hc-path">
-              {book.restartOrigin ? (
-                <div className="hc-origin-tag">
-                  🎯 Discovered via Random Restart #{book.restartOrigin}
-                </div>
-              ) : null}
-              <div className="hc-step-chain">
-                {(book.hillClimbingPath || []).map((step, i) => (
-                  <span key={`${step.id}-${i}`} className="step-chain-node">
-                    <span className="node-title">{step.title}</span>
-                    <span className="node-score">({step.score})</span>
-                    {i < (book.hillClimbingPath?.length || 0) - 1 ? (
-                      <span className="chain-arrow">→</span>
-                    ) : (
-                      <span className="node-badge-optimum">★ Local Optimum</span>
-                    )}
-                  </span>
-                ))}
-              </div>
-              <div style={{ marginTop: '0.6rem' }}>
-                <Link className="btn small" to="/reasoning">
-                  Inspect Full Step Trace in AI Reasoning →
-                </Link>
-              </div>
-            </div>
-          </details>
-        ) : null}
       </div>
     </article>
   );

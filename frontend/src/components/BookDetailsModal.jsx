@@ -94,6 +94,12 @@ export default function BookDetailsModal({ bookId, bookData, onClose }) {
                 {book.subgenre && book.subgenre !== 'General' ? (
                   <span className="badge-pill">{book.subgenre}</span>
                 ) : null}
+                {book.mood && book.mood !== 'Neutral' ? (
+                  <span className="badge-pill">{book.mood} Mood</span>
+                ) : null}
+                {book.recommendationScore !== undefined ? (
+                  <span className="badge-pill score-pill">AI Score: {book.recommendationScore}/{book.maxScore || 20}</span>
+                ) : null}
               </div>
               <h2 className="modal-title">{book.title}</h2>
               <p className="modal-author">by {book.author}</p>
@@ -101,18 +107,29 @@ export default function BookDetailsModal({ bookId, bookData, onClose }) {
                 <span className="rating-tag">★ {book.score || '4.0'}</span>
                 {book.ratings ? <span>· {Number(book.ratings).toLocaleString()} ratings</span> : null}
                 {book.published ? <span>· Published {book.published}</span> : null}
-                {book.length ? <span>· {book.length} Length</span> : null}
-                {book.readingLevel ? <span>· {book.readingLevel} Level</span> : null}
+                <span>· {book.pages ? `${book.pages} Pages` : `${book.length || 'Medium'} Length`}</span>
+                <span>· Difficulty: {book.readingLevel || 'Intermediate'}</span>
               </div>
             </div>
 
-            {book.whyRecommended && book.whyRecommended.length > 0 ? (
+            {((book.whyRecommended && book.whyRecommended.length > 0) || book.genre) ? (
               <div className="why-box">
-                <h4>✨ Why this book was recommended:</h4>
+                <h4>✨ Why this book?</h4>
                 <ul className="why-list">
-                  {book.whyRecommended.map((reason, idx) => (
-                    <li key={idx}>✓ {reason}</li>
-                  ))}
+                  {book.whyRecommended && book.whyRecommended.length > 0
+                    ? book.whyRecommended.map((reason, idx) => (
+                        <li key={idx}>✓ {reason}</li>
+                      ))
+                    : [
+                        book.genre ? `✓ Genre matches library catalog (${book.genre})` : null,
+                        book.mood ? `✓ Mood fits ${book.mood} category` : null,
+                        book.readingLevel ? `✓ Suitable reading level (${book.readingLevel})` : null,
+                        book.score >= 3.8 ? `✓ High rating (★ ${book.score})` : null,
+                        book.availability?.toLowerCase() === 'available' ? '✓ Available in library catalog' : null,
+                      ].filter(Boolean).map((reason, idx) => (
+                        <li key={idx}>{reason}</li>
+                      ))
+                  }
                 </ul>
               </div>
             ) : null}

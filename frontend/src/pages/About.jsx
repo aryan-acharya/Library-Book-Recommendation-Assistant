@@ -1,50 +1,52 @@
+import { PageHeader } from '../components/UIComponents';
+
 export default function About() {
   return (
-    <section className="about-page">
-      <header className="section-head">
-        <h1>LibraAI – Library Book Recommendation Assistant</h1>
-        <p>
-          An explainable intelligent digital library assistant for discovering books from a 10,538-book Knowledge Base.
-        </p>
-      </header>
+    <div className="about-page">
+      <PageHeader
+        title="About LibraAI"
+        description="Library Book Recommendation Assistant — An explainable, symbolic intelligent system built on Knowledge Representation, Rule-Based Reasoning, and Random-Restart Hill Climbing search."
+        icon={
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        }
+      />
 
-      <article className="panel">
-        <h2>What LibraAI Combines</h2>
-        <ul className="check-list">
-          <li>✓ Intelligent Agent concepts</li>
-          <li>✓ PEAS Representation</li>
-          <li>✓ Knowledge Representation</li>
-          <li>✓ Rule-Based Reasoning</li>
-          <li>✓ Forward Chaining</li>
-          <li>✓ Backward Chaining</li>
-          <li>✓ Hill Climbing Search</li>
-          <li>✓ Inference Engine</li>
-          <li>✓ Recommendation Ranking</li>
-        </ul>
-      </article>
+      <div className="explain-grid">
+        <article className="panel">
+          <h2>Core AI Pillars Combined</h2>
+          <ul className="check-list">
+            <li>✓ Intelligent Agent Concepts &amp; PEAS Specification</li>
+            <li>✓ Knowledge Representation (Predicate Logic / FOL Facts)</li>
+            <li>✓ Rule-Based Reasoning with R1–R10 Production Rules</li>
+            <li>✓ Forward Chaining (Data-Driven Inference)</li>
+            <li>✓ Backward Chaining (Goal-Driven Proof Search)</li>
+            <li>✓ Random-Restart Hill Climbing Local Search</li>
+            <li>✓ Semantic Content Similarity &amp; Multi-Attribute Matching</li>
+            <li>✓ Study Companion &amp; Real Reader Activity Analytics</li>
+          </ul>
+        </article>
 
-      <article className="panel">
-        <h2>Viva Explanation</h2>
-        <blockquote>
-          LibraAI is an intelligent library assistant that uses Knowledge Representation and a Rule-Based System to
-          reason about user preferences and book attributes. Forward Chaining or Backward Chaining is used for
-          inference. After generating candidate books, a recommendation score is calculated based on genre, interest,
-          mood, reading level, themes, rating, and other factors. Hill Climbing then searches through neighboring
-          candidate books to move toward higher-scoring recommendations. Random restarts are used to reduce the chance
-          of getting stuck at a local optimum.
-        </blockquote>
-      </article>
+        <article className="panel">
+          <h2>Viva &amp; Architecture Summary</h2>
+          <blockquote>
+            “LibraAI is an intelligent library assistant that combines Knowledge Representation and a Rule-Based System to reason about user criteria and book attributes. Either Forward Chaining or Backward Chaining is applied for inference. After filtering candidate books, a multi-attribute recommendation score is evaluated. Random-Restart Hill Climbing traverses semantic neighbor graphs to discover optimal recommendations while mitigating local optima.”
+          </blockquote>
+        </article>
 
-      <article className="panel">
-        <h2>Dataset Notes</h2>
-        <p>
-          Knowledge Base file: <code>Popular-Books-10000plus-Ratings-Enriched.csv</code> (10,538 books, 17 fields).
-        </p>
-        <p>
-          <strong>Length</strong> and <strong>Availability</strong> are derived/simulated fields for this academic
-          prototype. All other fields come from the enriched dataset and are not fabricated at runtime.
-        </p>
-      </article>
-    </section>
+        <article className="panel wide">
+          <h2>Knowledge Base &amp; Dataset Attribution</h2>
+          <p>
+            Dataset Source: <code>Popular-Books-10000plus-Ratings-Enriched.csv</code> (10,538 books across 17 attributes).
+          </p>
+          <p className="muted-hint" style={{ marginTop: '0.5rem' }}>
+            Attributes include Title, Author, Genre, Subgenre, Mood, Reading Level, Age Group, Themes, Keywords, Published Year, Ratings Count, and Goodreads Score. Length and Availability are simulated circulation attributes for this academic prototype.
+          </p>
+        </article>
+      </div>
+    </div>
   );
 }

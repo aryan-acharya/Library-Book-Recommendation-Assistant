@@ -156,6 +156,98 @@ export function deleteStudyPlan(bookId) {
   safeSet(STUDY_KEY, plans);
 }
 
+/* ================= Reading Shelves (Currently Reading & Completed) ================= */
+const SHELVED_BOOKS_KEY = 'libraai_shelved_books';
+
+export function getShelvedBooks() {
+  return safeGet(SHELVED_BOOKS_KEY, []);
+}
+
+export function setBookShelf(book, shelf) {
+  if (!book || !book.id) return;
+  const list = getShelvedBooks().filter((item) => item.bookId !== book.id);
+  if (shelf === 'reading' || shelf === 'completed') {
+    list.unshift({
+      bookId: book.id,
+      book,
+      shelf,
+      updatedAt: new Date().toISOString(),
+    });
+    addNotification('Library Updated', `“${book.title}” moved to ${shelf === 'reading' ? 'Currently Reading' : 'Completed'}.`);
+  }
+  safeSet(SHELVED_BOOKS_KEY, list);
+}
+
+export function removeBookShelf(bookId) {
+  const list = getShelvedBooks().filter((item) => item.bookId !== bookId);
+  safeSet(SHELVED_BOOKS_KEY, list);
+}
+
+export function getCurrentlyReading() {
+  const shelved = getShelvedBooks()
+    .filter((s) => s.shelf === 'reading')
+    .map((s) => s.book);
+
+  // Derive from active study plans
+  const studyPlans = getStudyPlans();
+  const fromPlans = studyPlans
+    .filter((p) => (p.completedDays || []).length < (p.days || 1))
+    .map((p) => ({
+      id: p.bookId,
+      title: p.title,
+      author: p.author,
+      image: p.image,
+      genre: p.genre,
+      readingLevel: 'Intermediate',
+      availability: 'Available',
+      score: 4.2,
+      studyPlan: p,
+    }));
+
+  // Deduplicate
+  const map = new Map();
+  [...fromPlans, ...shelved].forEach((b) => {
+    if (b && b.id && !map.has(b.id)) map.set(b.id, b);
+  });
+  return Array.from(map.values());
+}
+
+export function getCompletedBooks() {
+  const shelved = getShelvedBooks()
+    .filter((s) => s.shelf === 'completed')
+    .map((s) => s.book);
+
+  // Derive from finished study plans
+  const studyPlans = getStudyPlans();
+  const fromPlans = studyPlans
+    .filter((p) => p.days > 0 && (p.completedDays || []).length >= p.days)
+    .map((p) => ({
+      id: p.bookId,
+      title: p.title,
+      author: p.author,
+      image: p.image,
+      genre: p.genre,
+      readingLevel: 'Intermediate',
+      availability: 'Available',
+      score: 4.5,
+      studyPlan: p,
+    }));
+
+  const map = new Map();
+  [...fromPlans, ...shelved].forEach((b) => {
+    if (b && b.id && !map.has(b.id)) map.set(b.id, b);
+  });
+  return Array.from(map.values());
+}
+
+export function isCurrentlyReading(bookId) {
+  return getCurrentlyReading().some((b) => b.id === bookId);
+}
+
+export function isCompleted(bookId) {
+  return getCompletedBooks().some((b) => b.id === bookId);
+}
+
 /* ================= Activity Tracking & Real Analytics ================= */
 export function trackActivity(type, data = {}) {
   const log = safeGet(ACTIVITY_KEY, []);
