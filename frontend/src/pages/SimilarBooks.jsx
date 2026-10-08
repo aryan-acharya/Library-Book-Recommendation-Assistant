@@ -52,6 +52,9 @@ export default function SimilarBooks() {
   useEffect(() => {
     if (bookIdParam) {
       loadSimilar(bookIdParam);
+    } else {
+      // Auto-load default popular book so the page displays active content immediately
+      loadSimilar('B07470');
     }
   }, [bookIdParam]);
 
@@ -124,7 +127,6 @@ export default function SimilarBooks() {
       setSimilarList(data.similar || []);
       if (data.book) {
         addRecentlyViewed(data.book);
-        setTargetFav(isFavorite(data.book.id));
       }
     } catch (err) {
       console.error('Similar books load error:', err);
@@ -142,7 +144,9 @@ export default function SimilarBooks() {
     setShowSuggestions(false);
     setSearchResultsList([]);
     setSearchError('');
-    loadSimilar(book.id);
+    if (bookIdParam === book.id) {
+      loadSimilar(book.id);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -922,6 +926,15 @@ export default function SimilarBooks() {
                                 <li>
                                   <span className="factor-check">✓</span> Same reading level:{' '}
                                   <strong>{book.readingLevel}</strong>
+                                </li>
+                              ) : null}
+                              {!book.sharedGenre &&
+                              !book.sharedMood &&
+                              sharedThemesList.length === 0 &&
+                              sharedKeywordsList.length === 0 &&
+                              (!book.readingLevel || book.readingLevel !== targetBook?.readingLevel) ? (
+                                <li>
+                                  <span className="factor-check">✓</span> High semantic & catalog similarity
                                 </li>
                               ) : null}
                             </ul>
