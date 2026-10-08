@@ -284,7 +284,6 @@ export default function SimilarBooks() {
         title="Similar Books Explorer"
         accentText="Semantic Discovery"
         description="Discover books that are semantically and structurally similar to your selected book."
-        icon="🔗"
       />
 
       {/* 2. Dedicated Search Card */}
