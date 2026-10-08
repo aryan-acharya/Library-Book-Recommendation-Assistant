@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
-import { Cover } from '../components/BookComponents';
+import { BookCover } from '../components/BookComponents';
 import { PageHeader, EmptyState, LoadingState } from '../components/UIComponents';
 import {
   deleteStudyPlan,
@@ -12,19 +12,34 @@ import {
   setBookShelf,
 } from '../libraryStore';
 
+// Curated library books for 1-click study planning
+const QUICK_PICKS = [
+  { id: 'B07470', title: 'The Silent Patient', author: 'Alex Michaelides' },
+  { id: 'B00182', title: 'Silent Lies', author: 'Neva Altaj' },
+  { id: 'B00288', title: 'The Iron King', author: 'Maurice Druon' },
+  { id: 'B05753', title: 'Batman: The Dark Knight Returns', author: 'Frank Miller' },
+  { id: 'B01930', title: 'Are You Afraid of the Dark?', author: 'Sidney Sheldon' },
+];
+
 export default function StudyCompanion() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedBook, setSelectedBook] = useState(null);
   const [days, setDays] = useState(7);
   const [activePlan, setActivePlan] = useState(null);
   const [savedPlans, setSavedPlans] = useState([]);
+
+  // Search & autocomplete
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [searching, setSearching] = useState(false);
   const [loadingBook, setLoadingBook] = useState(false);
   const [continueFeedback, setContinueFeedback] = useState('');
-  const scheduleRef = useRef(null);
 
+  const scheduleRef = useRef(null);
+  const searchContainerRef = useRef(null);
+
+  // Initialize data on mount or URL change
   useEffect(() => {
     const plans = getStudyPlans();
     setSavedPlans(plans);
@@ -33,11 +48,22 @@ export default function StudyCompanion() {
     if (bookIdParam) {
       loadBook(bookIdParam);
     } else if (plans.length > 0) {
-      setActivePlan(plans[0]);
+      const firstPlan = plans[0];
+      setActivePlan(firstPlan);
+      setSelectedBook({
+        id: firstPlan.bookId,
+        title: firstPlan.title,
+        author: firstPlan.author,
+        image: firstPlan.image,
+        genre: firstPlan.genre,
+        length: firstPlan.totalPages >= 400 ? 'Long' : firstPlan.totalPages <= 200 ? 'Short' : 'Medium',
+      });
+      setDays(firstPlan.days);
     } else {
       const favs = getFavorites();
       if (favs.length > 0) {
         setSelectedBook(favs[0]);
+        loadBook(favs[0].id);
       } else {
         loadBook('B07470'); // The Silent Patient default
       }
@@ -50,7 +76,49 @@ export default function StudyCompanion() {
     return () => window.removeEventListener('libraai_store_update', onStorage);
   }, [searchParams]);
 
+  // Click outside to close suggestions
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Debounced live search autocomplete
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    let isCancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        setSearching(true);
+        const res = await api.search(q, 1, 6);
+        if (!isCancelled) {
+          setSuggestions(res.books || []);
+          setShowSuggestions(true);
+        }
+      } catch (err) {
+        console.error('Study search error:', err);
+      } finally {
+        if (!isCancelled) setSearching(false);
+      }
+    }, 220);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
+
   async function loadBook(id) {
+    if (!id) return;
     setLoadingBook(true);
     try {
       const res = await api.book(id);
@@ -69,25 +137,35 @@ export default function StudyCompanion() {
     }
   }
 
-  async function handleSearch(e) {
-    e.preventDefault();
+  function handleSelectBookItem(book) {
+    if (!book) return;
+    setSelectedBook(book);
+    setSearchQuery('');
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setSearchParams({ bookId: book.id });
+
+    const existing = savedPlans.find((p) => p.bookId === book.id);
+    if (existing) {
+      setActivePlan(existing);
+      setDays(existing.days);
+    } else {
+      loadBook(book.id);
+    }
+  }
+
+  function handleSearchSubmit(e) {
+    e?.preventDefault?.();
     if (!searchQuery.trim()) return;
-    setSearching(true);
-    try {
-      const res = await api.search(searchQuery.trim(), 1, 6);
-      setSearchResults(res.books || []);
-    } catch (err) {
-      console.error(err);
-      setSearchResults([]);
-    } finally {
-      setSearching(false);
+    if (suggestions.length > 0) {
+      handleSelectBookItem(suggestions[0]);
     }
   }
 
   function handleCreatePlan() {
     if (!selectedBook) return;
 
-    // Estimate pages based on book length
+    // Estimate total pages based on length attribute
     let totalPages = 320;
     const len = (selectedBook.length || '').toLowerCase();
     if (len === 'short') totalPages = 180;
@@ -115,6 +193,7 @@ export default function StudyCompanion() {
       author: selectedBook.author,
       image: selectedBook.image,
       genre: selectedBook.genre,
+      length: selectedBook.length,
       totalPages,
       days: numDays,
       pagesPerDay,
@@ -127,10 +206,9 @@ export default function StudyCompanion() {
     setBookShelf(selectedBook, 'reading');
     setActivePlan(newPlan);
     setSavedPlans(getStudyPlans());
-    setContinueFeedback('Study plan generated and added to Currently Reading!');
-    setTimeout(() => setContinueFeedback(''), 4000);
+    setContinueFeedback(`Study schedule generated for “${selectedBook.title}” and added to Currently Reading! 📖`);
+    setTimeout(() => setContinueFeedback(''), 4500);
 
-    // Scroll smoothly to schedule
     setTimeout(() => {
       scheduleRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 150);
@@ -139,14 +217,10 @@ export default function StudyCompanion() {
   function handleReset() {
     setDays(7);
     setSearchQuery('');
-    setSearchResults([]);
-    const favs = getFavorites();
-    if (favs.length > 0) {
-      setSelectedBook(favs[0]);
-    } else {
-      loadBook('B07470');
-    }
-    setContinueFeedback('Form reset to default settings.');
+    setSuggestions([]);
+    setShowSuggestions(false);
+    loadBook('B07470');
+    setContinueFeedback('Study companion reset to defaults.');
     setTimeout(() => setContinueFeedback(''), 3000);
   }
 
@@ -156,7 +230,6 @@ export default function StudyCompanion() {
     const updated = getStudyPlans().find((p) => p.bookId === activePlan.bookId);
     if (updated) {
       setActivePlan(updated);
-      // If all days completed, prompt or mark shelf as completed
       if (updated.completedDays?.length === updated.days) {
         setBookShelf(
           {
@@ -168,22 +241,24 @@ export default function StudyCompanion() {
           },
           'completed'
         );
-        setContinueFeedback('Congratulations! You completed this reading plan! 🎉 Book moved to Completed shelf.');
+        setContinueFeedback(`Congratulations! You completed the reading schedule for “${updated.title}”! 🎉 Moved to Completed shelf.`);
+      } else {
+        const isDoneNow = updated.completedDays?.includes(dayNum);
+        setContinueFeedback(isDoneNow ? `Day ${dayNum} marked as completed! ✓` : `Day ${dayNum} status reset to pending.`);
       }
+      setTimeout(() => setContinueFeedback(''), 4000);
     }
   }
 
   function handleContinueReading() {
     if (!activePlan) return;
-    // Find next uncompleted day
     const completed = activePlan.completedDays || [];
     const nextDay = activePlan.schedule?.find((item) => !completed.includes(item.day));
     if (nextDay) {
-      // Mark it as done or highlight
       handleDayToggle(nextDay.day);
       setContinueFeedback(`Marked Day ${nextDay.day} (Pages ${nextDay.startPage}–${nextDay.endPage}) as completed! 📖`);
     } else {
-      setContinueFeedback('All reading days for this book are completed! Great job! 🎉');
+      setContinueFeedback('All reading days for this book are already completed! Great achievement! 🎉');
     }
     setTimeout(() => setContinueFeedback(''), 4500);
   }
@@ -193,9 +268,31 @@ export default function StudyCompanion() {
     const plans = getStudyPlans();
     setSavedPlans(plans);
     if (activePlan?.bookId === bookId) {
-      setActivePlan(plans[0] || null);
+      const nextPlan = plans[0] || null;
+      setActivePlan(nextPlan);
+      if (nextPlan) {
+        setSelectedBook({
+          id: nextPlan.bookId,
+          title: nextPlan.title,
+          author: nextPlan.author,
+          image: nextPlan.image,
+          genre: nextPlan.genre,
+        });
+      }
     }
+    setContinueFeedback('Schedule removed from active plans.');
+    setTimeout(() => setContinueFeedback(''), 3000);
   }
+
+  // Pace estimation
+  const estTotalPages =
+    selectedBook?.length?.toLowerCase() === 'short'
+      ? 180
+      : selectedBook?.length?.toLowerCase() === 'long'
+      ? 540
+      : 320;
+  const numDaysVal = Math.max(1, Math.min(60, Number(days) || 7));
+  const estDailyPages = Math.ceil(estTotalPages / numDaysVal);
 
   const completedCount = activePlan?.completedDays?.length || 0;
   const totalDaysCount = activePlan?.days || 1;
@@ -204,9 +301,11 @@ export default function StudyCompanion() {
 
   return (
     <div className="study-companion-page">
+      {/* 1. Page Header */}
       <PageHeader
         title="Study Companion"
-        description="Create a personalized reading plan and daily schedule to finish any book at your pace."
+        accentText="Personalized Schedule"
+        description="Create structured daily reading targets to finish any book at your ideal pace."
         icon={
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -218,96 +317,148 @@ export default function StudyCompanion() {
         }
       />
 
-      {continueFeedback && (
+      {/* Floating Action / Success Toast */}
+      {continueFeedback ? (
         <div className="study-feedback-toast">
           <span>{continueFeedback}</span>
         </div>
-      )}
+      ) : null}
 
-      {/* 4-Step Visual Flow Header */}
+      {/* 2. Structured 4-Step Visual Flow Header */}
       <div className="study-flow-steps-banner">
-        <div className="flow-step-item active">
-          <span className="step-num">1</span>
-          <span className="step-text">Select Book</span>
+        <div className={`flow-step-item ${selectedBook ? 'done' : 'active'}`}>
+          <span className="step-num">{selectedBook ? '✓' : '1'}</span>
+          <span className="step-text">1. Select Book</span>
         </div>
         <span className="step-arrow">→</span>
-        <div className="flow-step-item active">
-          <span className="step-num">2</span>
-          <span className="step-text">Enter Days</span>
+
+        <div className={`flow-step-item ${days ? 'done' : 'active'}`}>
+          <span className="step-num">{days ? '✓' : '2'}</span>
+          <span className="step-text">2. Configure Days</span>
         </div>
         <span className="step-arrow">→</span>
-        <div className="flow-step-item active">
-          <span className="step-num">3</span>
-          <span className="step-text">Generate Plan</span>
+
+        <div className={`flow-step-item ${activePlan ? 'done' : 'active'}`}>
+          <span className="step-num">{activePlan ? '✓' : '3'}</span>
+          <span className="step-text">3. Generate Plan</span>
         </div>
         <span className="step-arrow">→</span>
-        <div className="flow-step-item active">
-          <span className="step-num">4</span>
-          <span className="step-text">Reading Schedule</span>
+
+        <div className={`flow-step-item ${progressPct === 100 ? 'done' : activePlan ? 'active' : ''}`}>
+          <span className="step-num">{progressPct === 100 ? '★' : '4'}</span>
+          <span className="step-text">4. Reading Targets</span>
         </div>
       </div>
 
+      {/* 3. Main Two-Column Layout Grid */}
       <div className="study-layout-grid">
-        {/* Left Column: Flow Controls & Plan Config */}
+        {/* Left Column: Configuration Frames */}
         <div className="study-sidebar-col">
-          {/* Step 1: Select Book */}
-          <div className="study-card-panel">
+          {/* Step 1: Select Book Frame */}
+          <section className="study-card-panel" ref={searchContainerRef}>
             <div className="panel-step-badge">Step 1</div>
-            <h3>Select a Book</h3>
-            <p className="panel-sub">Search library catalog or pick a book to schedule.</p>
+            <h3 className="panel-title">Select a Book</h3>
+            <p className="panel-sub">
+              Pick any book from the library catalog to build your daily reading roadmap.
+            </p>
 
-            <form className="study-search-bar" onSubmit={handleSearch}>
-              <input
-                type="text"
-                placeholder="Search by title or author..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <button type="submit" className="btn-small-primary" disabled={searching}>
+            {/* Search Input Bar */}
+            <form className="study-search-bar" onSubmit={handleSearchSubmit}>
+              <div className="study-search-input-wrap">
+                <span className="search-icon-symbol">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Search book title, author, or keyword..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                  autoComplete="off"
+                />
+                {searchQuery ? (
+                  <button
+                    type="button"
+                    className="study-search-clear"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSuggestions([]);
+                      setShowSuggestions(false);
+                    }}
+                    title="Clear search"
+                  >
+                    ✕
+                  </button>
+                ) : null}
+              </div>
+              <button
+                type="submit"
+                className="btn-study-search-submit"
+                disabled={searching}
+              >
                 {searching ? '...' : 'Search'}
               </button>
             </form>
 
-            {/* Live Search Results Picker */}
-            {searchResults.length > 0 && (
+            {/* Live Autocomplete Dropdown */}
+            {showSuggestions && suggestions.length > 0 ? (
               <div className="study-search-results-list">
-                <div className="results-head">Choose Book:</div>
-                {searchResults.map((b) => (
+                <div className="results-head">Matching Catalog Books:</div>
+                {suggestions.map((b) => (
                   <div
                     key={b.id}
                     className="compact-select-card"
-                    onClick={() => {
-                      setSelectedBook(b);
-                      setSearchResults([]);
-                      setSearchQuery('');
-                      const existing = savedPlans.find((p) => p.bookId === b.id);
-                      if (existing) setActivePlan(existing);
-                    }}
+                    onClick={() => handleSelectBookItem(b)}
                   >
-                    <Cover src={b.image} alt={b.title} className="thumb" />
-                    <div className="text">
+                    <BookCover
+                      src={b.image}
+                      alt={b.title}
+                      containerClassName="compact-card-thumb"
+                    />
+                    <div className="compact-card-meta">
                       <strong>{b.title}</strong>
-                      <span>{b.author} · {b.genre}</span>
+                      <span>by {b.author} · {b.genre}</span>
                     </div>
+                    <span className="compact-choose-pill">Select →</span>
                   </div>
                 ))}
               </div>
-            )}
+            ) : null}
 
-            {/* Selected Book Preview */}
+            {/* Quick Pick Pills for 1-Click Planning */}
+            <div className="study-quick-picks">
+              <span className="quick-picks-label">Quick picks:</span>
+              <div className="quick-picks-list">
+                {QUICK_PICKS.map((qp) => (
+                  <button
+                    key={qp.id}
+                    type="button"
+                    className={`study-quick-pill ${selectedBook?.id === qp.id ? 'active' : ''}`}
+                    onClick={() => handleSelectBookItem(qp)}
+                  >
+                    {qp.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Selected Book Preview Card */}
             {selectedBook ? (
               <div className="selected-book-preview-card">
-                <Cover src={selectedBook.image} alt={selectedBook.title} className="preview-cover" />
+                <BookCover
+                  src={selectedBook.image}
+                  alt={selectedBook.title}
+                  containerClassName="preview-cover-container"
+                />
                 <div className="preview-info">
-                  <h4>{selectedBook.title}</h4>
+                  <span className="preview-label">Selected Base:</span>
+                  <h4 className="preview-title">{selectedBook.title}</h4>
                   <p className="preview-author">by {selectedBook.author}</p>
                   <div className="preview-tags">
-                    <span className="tag-pill">{selectedBook.genre || 'Fiction'}</span>
-                    <span className="tag-pill">
+                    <span className="tag-pill genre">{selectedBook.genre || 'Fiction'}</span>
+                    <span className="tag-pill length">
                       {selectedBook.length ? `${selectedBook.length} Length` : '~320 Pages'}
                     </span>
                     {selectedBook.score ? (
-                      <span className="tag-pill gold">★ {selectedBook.score}</span>
+                      <span className="tag-pill gold">★ {Number(selectedBook.score).toFixed(1)}</span>
                     ) : null}
                   </div>
                 </div>
@@ -315,23 +466,26 @@ export default function StudyCompanion() {
             ) : loadingBook ? (
               <LoadingState message="Loading book details..." />
             ) : (
-              <p className="muted-hint">Search and select any book above.</p>
+              <p className="muted-hint">Select any book from the catalog or quick picks above.</p>
             )}
-          </div>
+          </section>
 
-          {/* Step 2: Enter Number of Days */}
-          <div className="study-card-panel">
+          {/* Step 2: Configure Duration Frame */}
+          <section className="study-card-panel">
             <div className="panel-step-badge">Step 2</div>
-            <h3>Enter Number of Days</h3>
-            <p className="panel-sub">How many days do you want to allocate for reading?</p>
+            <h3 className="panel-title">Target Duration</h3>
+            <p className="panel-sub">
+              How many days would you like to allocate to finish this book?
+            </p>
 
             <div className="days-input-wrapper">
-              <label htmlFor="study-days-input">Target Duration</label>
+              <label htmlFor="study-days-input">Total Target Days:</label>
               <div className="stepper-row">
                 <button
                   type="button"
                   className="stepper-btn"
                   onClick={() => setDays((d) => Math.max(1, Number(d) - 1))}
+                  title="Decrease days"
                 >
                   −
                 </button>
@@ -342,12 +496,13 @@ export default function StudyCompanion() {
                   max="60"
                   className="study-days-num-input"
                   value={days}
-                  onChange={(e) => setDays(e.target.value)}
+                  onChange={(e) => setDays(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
                 />
                 <button
                   type="button"
                   className="stepper-btn"
                   onClick={() => setDays((d) => Math.min(60, Number(d) + 1))}
+                  title="Increase days"
                 >
                   +
                 </button>
@@ -355,7 +510,7 @@ export default function StudyCompanion() {
               </div>
             </div>
 
-            {/* Quick Days Selector Chips */}
+            {/* Quick Duration Selector Chips */}
             <div className="days-quick-chips">
               {[3, 7, 14, 21, 30].map((d) => (
                 <button
@@ -369,18 +524,19 @@ export default function StudyCompanion() {
               ))}
             </div>
 
-            {/* Estimated Page Target Pill */}
-            {selectedBook && (
-              <div className="daily-pace-estimate">
-                <span>Estimated Pace:</span>
-                <strong>
-                  ~{Math.ceil((selectedBook.length?.toLowerCase() === 'short' ? 180 : selectedBook.length?.toLowerCase() === 'long' ? 540 : 320) / Math.max(1, Number(days) || 7))} pages/day
-                </strong>
+            {/* Pace Metric Pill */}
+            <div className="daily-pace-estimate">
+              <div className="pace-left">
+                <span>Calculated Daily Pace:</span>
+                <strong>~{estDailyPages} pages/day</strong>
               </div>
-            )}
-          </div>
+              <span className="pace-badge">
+                {estDailyPages <= 25 ? '🌿 Relaxed' : estDailyPages <= 50 ? '⚡ Moderate' : '🔥 Sprint'}
+              </span>
+            </div>
+          </section>
 
-          {/* Step 3: Action Buttons */}
+          {/* Step 3: Action Buttons Frame */}
           <div className="study-actions-panel">
             <button
               type="button"
@@ -388,7 +544,7 @@ export default function StudyCompanion() {
               onClick={handleCreatePlan}
               disabled={!selectedBook || loadingBook}
             >
-              Generate Plan →
+              Generate Study Plan ⚡
             </button>
             <button
               type="button"
@@ -399,10 +555,13 @@ export default function StudyCompanion() {
             </button>
           </div>
 
-          {/* Saved Reading Plans List */}
-          {savedPlans.length > 0 && (
-            <div className="study-card-panel">
-              <h3>Active Schedules ({savedPlans.length})</h3>
+          {/* Saved Reading Plans Frame */}
+          {savedPlans.length > 0 ? (
+            <section className="study-card-panel">
+              <div className="saved-plans-header">
+                <h3 className="panel-title">Active Plans</h3>
+                <span className="plans-counter-pill">{savedPlans.length}</span>
+              </div>
               <div className="saved-plans-compact-list">
                 {savedPlans.map((p) => {
                   const done = p.completedDays?.length || 0;
@@ -412,14 +571,30 @@ export default function StudyCompanion() {
                     <div
                       key={p.bookId}
                       className={`saved-plan-row ${isCurrent ? 'selected' : ''}`}
-                      onClick={() => setActivePlan(p)}
+                      onClick={() => {
+                        setActivePlan(p);
+                        setSelectedBook({
+                          id: p.bookId,
+                          title: p.title,
+                          author: p.author,
+                          image: p.image,
+                          genre: p.genre,
+                          length: p.totalPages >= 400 ? 'Long' : p.totalPages <= 200 ? 'Short' : 'Medium',
+                        });
+                        setDays(p.days);
+                      }}
                     >
-                      <Cover src={p.image} alt={p.title} className="row-thumb" />
+                      <BookCover
+                        src={p.image}
+                        alt={p.title}
+                        containerClassName="row-thumb-container"
+                      />
                       <div className="row-details">
                         <strong title={p.title}>{p.title}</strong>
-                        <span>
-                          {done}/{p.days} days ({pct}%)
-                        </span>
+                        <div className="row-meta-line">
+                          <span>{done}/{p.days} days completed</span>
+                          <span className="pct-text">{pct}%</span>
+                        </div>
                         <div className="row-progress-bar">
                           <div className="row-progress-fill" style={{ width: `${pct}%` }}></div>
                         </div>
@@ -439,31 +614,35 @@ export default function StudyCompanion() {
                   );
                 })}
               </div>
-            </div>
-          )}
+            </section>
+          ) : null}
         </div>
 
-        {/* Right Column: Step 4 Reading Schedule */}
+        {/* Right Column: Step 4 Reading Schedule Dashboard */}
         <div className="study-main-col" ref={scheduleRef}>
           {activePlan ? (
             <div className="reading-schedule-dashboard">
-              {/* Header Info Banner */}
-              <div className="schedule-meta-banner">
+              {/* Header Info Banner Frame */}
+              <section className="schedule-meta-banner">
                 <div className="banner-left">
-                  <Cover src={activePlan.image} alt={activePlan.title} className="schedule-hero-cover" />
+                  <BookCover
+                    src={activePlan.image}
+                    alt={activePlan.title}
+                    containerClassName="schedule-hero-cover"
+                  />
                   <div className="banner-text">
-                    <span className="badge-pill active">Step 4: Reading Schedule</span>
-                    <h2>{activePlan.title}</h2>
+                    <span className="badge-pill active">Step 4: Active Reading Schedule</span>
+                    <h2 className="schedule-title">{activePlan.title}</h2>
                     <p className="author-name">by {activePlan.author}</p>
                     <div className="schedule-key-metrics">
                       <span className="key-metric">
                         Total: <strong>~{activePlan.totalPages} pages</strong>
                       </span>
                       <span className="key-metric">
-                        Daily Target: <strong>~{activePlan.pagesPerDay} pages/day</strong>
+                        Daily Pace: <strong>~{activePlan.pagesPerDay} pages/day</strong>
                       </span>
                       <span className="key-metric">
-                        Plan Duration: <strong>{activePlan.days} days</strong>
+                        Duration: <strong>{activePlan.days} days</strong>
                       </span>
                     </div>
                   </div>
@@ -474,7 +653,7 @@ export default function StudyCompanion() {
                   <div className="progress-top-row">
                     <span className="progress-percentage">{progressPct}%</span>
                     <span className="progress-count">
-                      {completedCount} / {totalDaysCount} Days
+                      {completedCount} / {totalDaysCount} Days Completed
                     </span>
                   </div>
                   <div className="large-progress-track">
@@ -482,10 +661,10 @@ export default function StudyCompanion() {
                   </div>
                   <div className="estimate-row">
                     {progressPct === 100 ? (
-                      <span className="completion-estimate complete">🎉 All targets completed!</span>
+                      <span className="completion-estimate complete">🎉 All targets completed! Moved to shelf.</span>
                     ) : (
                       <span className="completion-estimate">
-                        Est. completion in {remainingDays} {remainingDays === 1 ? 'day' : 'days'}
+                        {remainingDays} {remainingDays === 1 ? 'day' : 'days'} remaining to finish
                       </span>
                     )}
                   </div>
@@ -497,13 +676,20 @@ export default function StudyCompanion() {
                     📖 Continue Reading
                   </button>
                 </div>
-              </div>
+              </section>
 
-              {/* Day-by-Day Reading Schedule Grid */}
-              <div className="schedule-days-section">
+              {/* Day-by-Day Reading Schedule Grid Frame */}
+              <section className="schedule-days-section">
                 <div className="section-title-strip">
-                  <h3>Daily Reading Targets</h3>
-                  <span className="sub-hint">Click any day to toggle completion</span>
+                  <div>
+                    <h3 className="section-headline">Daily Reading Targets</h3>
+                    <p className="section-sub">
+                      Click any day card to log completion or mark pages read.
+                    </p>
+                  </div>
+                  <span className="sub-hint">
+                    {completedCount} of {totalDaysCount} finished
+                  </span>
                 </div>
 
                 <div className="daily-schedule-cards-grid">
@@ -514,11 +700,12 @@ export default function StudyCompanion() {
                         key={item.day}
                         className={`daily-target-card ${isDone ? 'done' : ''}`}
                         onClick={() => handleDayToggle(item.day)}
+                        title={isDone ? `Day ${item.day} completed. Click to mark pending.` : `Click to mark Day ${item.day} as completed.`}
                       >
                         <div className="card-header-row">
                           <span className="day-badge">Day {item.day}</span>
                           <span className={`status-pill ${isDone ? 'checked' : 'pending'}`}>
-                            {isDone ? '✓ Done' : '○ Pending'}
+                            {isDone ? '✓ Completed' : '○ Pending'}
                           </span>
                         </div>
 
@@ -527,26 +714,22 @@ export default function StudyCompanion() {
                         </div>
 
                         <div className="card-target-footer">
-                          <span>Target:</span>
+                          <span>Daily Target:</span>
                           <strong>{item.targetPages} pages</strong>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
+              </section>
             </div>
           ) : (
             <EmptyState
               icon="📖"
-              title="No Active Reading Schedule"
+              title="Ready to Build Your Reading Schedule"
               message="Select or search for any book in Step 1 to generate a personalized daily reading plan."
-              actionText="Pick a Book to Plan"
-              onAction={() => {
-                const favs = getFavorites();
-                if (favs.length > 0) setSelectedBook(favs[0]);
-                else loadBook('B07470');
-              }}
+              actionText="Generate 7-Day Plan"
+              onAction={handleCreatePlan}
             />
           )}
         </div>
