@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import quoteReaderImg from '../assets/quote_reader.jpg';
 import { getNotifications, markNotificationsRead } from '../libraryStore';
+import { getCurrentUser, logoutUser } from '../authStore';
 
 const navItems = [
   {
@@ -136,6 +137,7 @@ export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [quoteIndex, setQuoteIndex] = useState(0);
+  const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
   const notifRef = useRef(null);
   const userRef = useRef(null);
   const navigate = useNavigate();
@@ -145,8 +147,15 @@ export default function Layout() {
     function onStorage() {
       setNotifications(getNotifications());
     }
+    function onAuth(e) {
+      setCurrentUser(e.detail?.user || getCurrentUser());
+    }
     window.addEventListener('libraai_store_update', onStorage);
-    return () => window.removeEventListener('libraai_store_update', onStorage);
+    window.addEventListener('libraai_auth_update', onAuth);
+    return () => {
+      window.removeEventListener('libraai_store_update', onStorage);
+      window.removeEventListener('libraai_auth_update', onAuth);
+    };
   }, []);
 
   // Close dropdowns when clicking outside
@@ -271,23 +280,53 @@ export default function Layout() {
 
           {/* User Profile Dropdown */}
           <div className="user-profile-wrapper" ref={userRef}>
-            <button
-              type="button"
-              className="user-btn"
-              onClick={() => setUserMenuOpen((o) => !o)}
-            >
-              <div className="user-avatar">A</div>
-              <div className="user-info">
-                <span className="user-name">User</span>
-                <span className="user-role">Book Lover</span>
-              </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`chevron ${userMenuOpen ? 'open' : ''}`}>
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
+            {currentUser ? (
+              <button
+                type="button"
+                className="user-btn"
+                onClick={() => setUserMenuOpen((o) => !o)}
+                aria-label="User account menu"
+              >
+                <div className="user-avatar" style={{ background: '#0284C7', color: '#FFFFFF' }}>
+                  {(currentUser.name || 'U')[0].toUpperCase()}
+                </div>
+                <div className="user-info">
+                  <span className="user-name">{currentUser.name}</span>
+                  <span className="user-role">{currentUser.role || 'Patron Reader'}</span>
+                </div>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className={`chevron ${userMenuOpen ? 'open' : ''}`}
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+            ) : (
+              <NavLink to="/login" className="user-btn auth-top-signin-btn">
+                <div className="user-avatar" style={{ background: '#1E293B' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+                <div className="user-info">
+                  <span className="user-name">Sign In</span>
+                  <span className="user-role">Guest Patron</span>
+                </div>
+              </NavLink>
+            )}
 
-            {userMenuOpen ? (
+            {userMenuOpen && currentUser ? (
               <div className="user-dropdown-menu">
+                <div className="user-dropdown-header" style={{ padding: '0.6rem 0.9rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <strong style={{ fontSize: '0.9rem', display: 'block', color: '#F1F5F9' }}>{currentUser.name}</strong>
+                  <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{currentUser.email}</span>
+                </div>
                 <NavLink to="/library" onClick={() => setUserMenuOpen(false)}>
                   📚 My Library
                 </NavLink>
@@ -307,6 +346,32 @@ export default function Layout() {
                 <NavLink to="/knowledge-base" onClick={() => setUserMenuOpen(false)}>
                   🗃️ Knowledge Base (10,538 books)
                 </NavLink>
+                <div className="menu-divider"></div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logoutUser();
+                    setUserMenuOpen(false);
+                    navigate('/login');
+                  }}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '0.6rem 0.9rem',
+                    color: '#EF4444',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  Sign Out
+                </button>
               </div>
             ) : null}
           </div>

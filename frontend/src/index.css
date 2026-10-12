@@ -56,14 +56,20 @@ html,
 body,
 #root {
   min-height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
   max-width: 100%;
+  margin: 0;
+  padding: 0;
   background: var(--bg-main);
   color: var(--text-main);
 }
 
 body {
   overflow-x: hidden;
+  margin: 0;
+  padding: 0;
   background-color: var(--bg-main);
 }
 
@@ -13088,3 +13094,890 @@ textarea {
     justify-content: center;
   }
 }
+
+/* ==========================================================================
+   LibraAI — Full Background Image with Centered Glassmorphism Login & Signup
+   ========================================================================== */
+
+/* Full-Screen Fixed Library Background Layer */
+.auth-bg-layer {
+  position: fixed;
+  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background-image: url('/images/libraai-library-background.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.auth-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+}
+
+.auth-bg-overlay {
+  position: absolute;
+  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  transition: background 0.3s ease;
+}
+
+.auth-glass-page.theme-dark .auth-bg-overlay {
+  background: linear-gradient(
+    rgba(4, 10, 20, 0.48),
+    rgba(4, 10, 20, 0.62)
+  );
+}
+
+.auth-glass-page.theme-light .auth-bg-overlay {
+  background: linear-gradient(
+    rgba(4, 10, 20, 0.36),
+    rgba(4, 10, 20, 0.52)
+  );
+}
+
+.auth-glass-page {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  padding: 3rem 1.25rem;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+/* Floating Theme Toggle (Top-Right) */
+.auth-floating-theme-toggle {
+  position: fixed;
+  top: 24px;
+  right: 28px;
+  z-index: 100;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.auth-glass-page.theme-dark .auth-floating-theme-toggle {
+  background: rgba(12, 20, 35, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #F59E0B;
+}
+
+.auth-glass-page.theme-dark .auth-floating-theme-toggle:hover {
+  background: rgba(18, 30, 52, 0.85);
+  border-color: #38BDF8;
+  color: #38BDF8;
+  transform: scale(1.08);
+}
+
+.auth-glass-page.theme-light .auth-floating-theme-toggle {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: #1E293B;
+}
+
+.auth-glass-page.theme-light .auth-floating-theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.9);
+  color: #0284C7;
+  transform: scale(1.08);
+}
+
+/* Centered Glassmorphic Authentication Card */
+.auth-glass-card {
+  width: 100%;
+  max-width: 460px;
+  border-radius: 22px;
+  padding: 2.5rem 2.6rem;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 10;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, color 0.25s ease;
+  animation: authGlassFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes authGlassFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Card - Dark Mode (Default) */
+.auth-glass-page.theme-dark .auth-glass-card {
+  background: rgba(12, 20, 35, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  color: #F8FAFC;
+}
+
+/* Card - Light Mode */
+.auth-glass-page.theme-light .auth-glass-card {
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.45) inset;
+  color: #0F172A;
+}
+
+/* Brand Header Inside Card */
+.auth-glass-brand-head {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.auth-glass-brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.auth-glass-brand-link:hover {
+  opacity: 0.9;
+}
+
+.auth-glass-brand-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.auth-glass-page.theme-dark .auth-glass-brand-icon {
+  background: rgba(56, 189, 248, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.2);
+}
+
+.auth-glass-page.theme-light .auth-glass-brand-icon {
+  background: rgba(2, 132, 199, 0.12);
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.15);
+}
+
+.auth-glass-brand-texts {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-glass-brand-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.auth-glass-page.theme-dark .auth-glass-brand-name {
+  color: #F8FAFC;
+}
+
+.auth-glass-page.theme-light .auth-glass-brand-name {
+  color: #0F172A;
+}
+
+.auth-glass-brand-sub {
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+
+.auth-glass-page.theme-dark .auth-glass-brand-sub {
+  color: #94A3B8;
+}
+
+.auth-glass-page.theme-light .auth-glass-brand-sub {
+  color: #475569;
+}
+
+/* Headings */
+.auth-glass-head {
+  text-align: center;
+  margin-bottom: 1.65rem;
+}
+
+.auth-glass-title {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.auth-glass-page.theme-dark .auth-glass-title {
+  color: #F8FAFC;
+}
+
+.auth-glass-page.theme-light .auth-glass-title {
+  color: #0F172A;
+}
+
+.auth-glass-desc {
+  font-size: 0.92rem;
+  margin-top: 0.4rem;
+  line-height: 1.45;
+}
+
+.auth-glass-page.theme-dark .auth-glass-desc {
+  color: #94A3B8;
+}
+
+.auth-glass-page.theme-light .auth-glass-desc {
+  color: #475569;
+}
+
+/* Form Container */
+.auth-glass-form {
+  width: 100%;
+}
+
+/* Feedback Alerts */
+.auth-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin-bottom: 1.25rem;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.auth-glass-page.theme-dark .auth-alert-error {
+  background-color: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  color: #FCA5A5;
+}
+
+.auth-glass-page.theme-dark .auth-alert-success {
+  background-color: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  color: #86EFAC;
+}
+
+.auth-glass-page.theme-light .auth-alert-error {
+  background-color: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  color: #B91C1C;
+}
+
+.auth-glass-page.theme-light .auth-alert-success {
+  background-color: #F0FDF4;
+  border: 1px solid #86EFAC;
+  color: #15803D;
+}
+
+/* Grouped Input Card with Glass Blur */
+.auth-field-row {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.15rem;
+  gap: 0.9rem;
+}
+
+.auth-field-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.auth-field-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.auth-field-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.96rem;
+  font-weight: 500;
+  width: 100%;
+  padding: 0;
+  line-height: 1.35;
+}
+
+.auth-eye-btn {
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+/* Dark Mode Input Group */
+.auth-glass-page.theme-dark .auth-input-group-card {
+  background: rgba(17, 28, 46, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.auth-glass-page.theme-dark .auth-input-group-card:focus-within {
+  border-color: #38BDF8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+}
+
+.auth-glass-page.theme-dark .auth-card-divider {
+  background-color: rgba(255, 255, 255, 0.1);
+  height: 1px;
+  margin: 0 1rem;
+}
+
+.auth-glass-page.theme-dark .auth-field-label {
+  color: #94A3B8;
+  font-size: 0.74rem;
+  font-weight: 500;
+  margin-bottom: 0.15rem;
+  user-select: none;
+}
+
+.auth-glass-page.theme-dark .auth-field-input {
+  color: #F8FAFC;
+}
+
+.auth-glass-page.theme-dark .auth-field-input::placeholder {
+  color: #64748B;
+}
+
+.auth-glass-page.theme-dark .auth-field-icon {
+  color: #94A3B8;
+}
+
+.auth-glass-page.theme-dark .auth-eye-btn {
+  color: #94A3B8;
+}
+
+.auth-glass-page.theme-dark .auth-eye-btn:hover {
+  color: #F8FAFC;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Light Mode Input Group */
+.auth-glass-page.theme-light .auth-input-group-card {
+  background: rgba(240, 245, 252, 0.88);
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.auth-glass-page.theme-light .auth-input-group-card:focus-within {
+  border-color: #0284C7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+}
+
+.auth-glass-page.theme-light .auth-card-divider {
+  background-color: rgba(203, 213, 225, 0.75);
+  height: 1px;
+  margin: 0 1rem;
+}
+
+.auth-glass-page.theme-light .auth-field-label {
+  color: #475569;
+  font-size: 0.74rem;
+  font-weight: 500;
+  margin-bottom: 0.15rem;
+  user-select: none;
+}
+
+.auth-glass-page.theme-light .auth-field-input {
+  color: #0F172A;
+}
+
+.auth-glass-page.theme-light .auth-field-input::placeholder {
+  color: #94A3B8;
+}
+
+.auth-glass-page.theme-light .auth-field-icon {
+  color: #64748B;
+}
+
+.auth-glass-page.theme-light .auth-eye-btn {
+  color: #64748B;
+}
+
+.auth-glass-page.theme-light .auth-eye-btn:hover {
+  color: #0F172A;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Aux Row (Remember me & Forgot Password) */
+.auth-aux-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.65rem;
+  font-size: 0.88rem;
+}
+
+.auth-remember-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+  font-weight: 500;
+  user-select: none;
+}
+
+.auth-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.auth-custom-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.auth-glass-page.theme-dark .auth-remember-label {
+  color: #CBD5E1;
+}
+
+.auth-glass-page.theme-dark .auth-custom-radio {
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  background: rgba(17, 28, 46, 0.8);
+}
+
+.auth-glass-page.theme-dark .auth-checkbox:checked + .auth-custom-radio {
+  border-color: #2563EB;
+  background: #2563EB;
+}
+
+.auth-glass-page.theme-dark .auth-checkbox:checked + .auth-custom-radio::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #FFFFFF;
+}
+
+.auth-glass-page.theme-dark .auth-forgot-link {
+  color: #94A3B8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.auth-glass-page.theme-dark .auth-forgot-link:hover {
+  color: #38BDF8;
+  text-decoration: underline;
+}
+
+.auth-glass-page.theme-light .auth-remember-label {
+  color: #475569;
+}
+
+.auth-glass-page.theme-light .auth-custom-radio {
+  border: 1.5px solid #94A3B8;
+  background: #FFFFFF;
+}
+
+.auth-glass-page.theme-light .auth-checkbox:checked + .auth-custom-radio {
+  border-color: #1E293B;
+  background: #1E293B;
+}
+
+.auth-glass-page.theme-light .auth-checkbox:checked + .auth-custom-radio::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #FFFFFF;
+}
+
+.auth-glass-page.theme-light .auth-forgot-link {
+  color: #475569;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.auth-glass-page.theme-light .auth-forgot-link:hover {
+  color: #0284C7;
+  text-decoration: underline;
+}
+
+/* Action Buttons */
+.auth-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.auth-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: 28px;
+  padding: 0.78rem 2rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.auth-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.auth-btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.auth-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 28px;
+  padding: 0.72rem 1.75rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-btn-secondary:hover {
+  transform: translateY(-1px);
+}
+
+.auth-btn-loader {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.auth-glass-page.theme-dark .auth-btn-primary {
+  background-color: #2563EB;
+  color: #FFFFFF;
+  box-shadow: 0 4px 18px rgba(37, 99, 235, 0.4);
+}
+
+.auth-glass-page.theme-dark .auth-btn-primary:hover:not(:disabled) {
+  background-color: #1D4ED8;
+  box-shadow: 0 6px 22px rgba(37, 99, 235, 0.55);
+}
+
+.auth-glass-page.theme-dark .auth-btn-secondary {
+  background-color: rgba(17, 28, 46, 0.65);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  color: #F8FAFC;
+}
+
+.auth-glass-page.theme-dark .auth-btn-secondary:hover {
+  background-color: rgba(28, 44, 72, 0.85);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.auth-glass-page.theme-light .auth-btn-primary {
+  background-color: #1E293B;
+  color: #FFFFFF;
+  box-shadow: 0 4px 16px rgba(30, 41, 59, 0.25);
+}
+
+.auth-glass-page.theme-light .auth-btn-primary:hover:not(:disabled) {
+  background-color: #0F172A;
+  box-shadow: 0 6px 20px rgba(30, 41, 59, 0.35);
+}
+
+.auth-glass-page.theme-light .auth-btn-secondary {
+  background-color: rgba(255, 255, 255, 0.65);
+  border: 1.5px solid #1E293B;
+  color: #1E293B;
+}
+
+.auth-glass-page.theme-light .auth-btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+/* Auto-Fill Demo Credentials Button */
+.auth-demo-wrapper {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+}
+
+.auth-btn-demo {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border-radius: 26px;
+  padding: 0.74rem 1.25rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-glass-page.theme-dark .auth-demo-wrapper {
+  border-top: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+.auth-glass-page.theme-dark .auth-btn-demo {
+  background-color: rgba(17, 28, 46, 0.55);
+  border: 1.5px dashed rgba(56, 189, 248, 0.45);
+  color: #F8FAFC;
+}
+
+.auth-glass-page.theme-dark .auth-btn-demo:hover {
+  background-color: rgba(56, 189, 248, 0.15);
+  border-color: #38BDF8;
+  color: #38BDF8;
+  transform: translateY(-1px);
+}
+
+.auth-glass-page.theme-dark .auth-demo-icon {
+  color: #38BDF8;
+}
+
+.auth-glass-page.theme-light .auth-demo-wrapper {
+  border-top: 1px dashed rgba(148, 163, 184, 0.4);
+}
+
+.auth-glass-page.theme-light .auth-btn-demo {
+  background-color: rgba(248, 250, 252, 0.85);
+  border: 1.5px dashed #94A3B8;
+  color: #334155;
+}
+
+.auth-glass-page.theme-light .auth-btn-demo:hover {
+  background-color: rgba(240, 249, 255, 0.95);
+  border-color: #0284C7;
+  color: #0284C7;
+  transform: translateY(-1px);
+}
+
+.auth-glass-page.theme-light .auth-demo-icon {
+  color: #0284C7;
+}
+
+/* Switch Link on Signup */
+.auth-switch-link-wrap {
+  margin-top: 1.35rem;
+  text-align: center;
+  font-size: 0.88rem;
+}
+
+.auth-switch-link {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-switch-link:hover {
+  text-decoration: underline;
+}
+
+.auth-glass-page.theme-dark .auth-switch-link-wrap {
+  color: #94A3B8;
+}
+
+.auth-glass-page.theme-dark .auth-switch-link {
+  color: #38BDF8;
+}
+
+.auth-glass-page.theme-light .auth-switch-link-wrap {
+  color: #475569;
+}
+
+.auth-glass-page.theme-light .auth-switch-link {
+  color: #0284C7;
+}
+
+/* Modal - Glassmorphism */
+.auth-modal-card.auth-modal-glass {
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  border-radius: 20px;
+}
+
+.auth-glass-page.theme-dark .auth-modal-card.auth-modal-glass {
+  background: rgba(12, 20, 35, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #F8FAFC;
+}
+
+.auth-glass-page.theme-dark .auth-modal-head h3 {
+  color: #F8FAFC;
+}
+
+.auth-glass-page.theme-dark .auth-modal-close {
+  color: #94A3B8;
+}
+
+.auth-glass-page.theme-dark .auth-modal-close:hover {
+  color: #F8FAFC;
+}
+
+.auth-glass-page.theme-dark .auth-modal-desc {
+  color: #94A3B8;
+}
+
+.auth-glass-page.theme-dark .auth-modal-input {
+  background: rgba(17, 28, 46, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #F8FAFC;
+}
+
+.auth-glass-page.theme-dark .auth-modal-input:focus {
+  border-color: #38BDF8;
+}
+
+.auth-glass-page.theme-dark .auth-modal-btn-cancel {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #94A3B8;
+}
+
+.auth-glass-page.theme-dark .auth-modal-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #F8FAFC;
+}
+
+.auth-glass-page.theme-light .auth-modal-card.auth-modal-glass {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  color: #0F172A;
+}
+
+.auth-glass-page.theme-light .auth-modal-head h3 {
+  color: #0F172A;
+}
+
+.auth-glass-page.theme-light .auth-modal-close {
+  color: #64748B;
+}
+
+.auth-glass-page.theme-light .auth-modal-close:hover {
+  color: #0F172A;
+}
+
+.auth-glass-page.theme-light .auth-modal-desc {
+  color: #475569;
+}
+
+.auth-glass-page.theme-light .auth-modal-input {
+  background: #F0F5FC;
+  border: 1px solid #DCE6F2;
+  color: #0F172A;
+}
+
+.auth-glass-page.theme-light .auth-modal-input:focus {
+  border-color: #0284C7;
+}
+
+.auth-glass-page.theme-light .auth-modal-btn-cancel {
+  border: 1.5px solid #CBD5E1;
+  color: #475569;
+}
+
+.auth-glass-page.theme-light .auth-modal-btn-cancel:hover {
+  background: #F1F5F9;
+}
+
+/* Responsive Styles */
+@media (max-width: 540px) {
+  .auth-glass-page {
+    padding: 2rem 1rem;
+  }
+  .auth-glass-card {
+    padding: 2rem 1.4rem;
+    border-radius: 18px;
+    max-width: 100%;
+  }
+  .auth-glass-title {
+    font-size: 1.65rem;
+  }
+  .auth-floating-theme-toggle {
+    top: 14px;
+    right: 16px;
+    width: 38px;
+    height: 38px;
+  }
+  .auth-actions-row {
+    flex-direction: column;
+    width: 100%;
+  }
+  .auth-btn-primary,
+  .auth-btn-secondary {
+    width: 100%;
+  }
+}
+
+
+

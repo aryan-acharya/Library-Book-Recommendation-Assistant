@@ -15,11 +15,15 @@ import Recommend from './pages/Recommend';
 import Search from './pages/Search';
 import SimilarBooks from './pages/SimilarBooks';
 import StudyCompanion from './pages/StudyCompanion';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="login" element={<Login />} />
+        <Route path="signup" element={<Signup />} />
         <Route element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="recommend" element={<Recommend />} />
