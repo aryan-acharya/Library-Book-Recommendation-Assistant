@@ -120,6 +120,10 @@ export function addRecentlyViewed(book) {
   });
 }
 
+export function clearRecentlyViewed() {
+  safeSet(RECENT_KEY, []);
+}
+
 /* ================= Study Companion Plans ================= */
 export function getStudyPlans() {
   return safeGet(STUDY_KEY, []);
