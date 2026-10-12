@@ -264,6 +264,10 @@ export function trackActivity(type, data = {}) {
   safeSet(ACTIVITY_KEY, [entry, ...log.slice(0, 150)]);
 }
 
+export function getActivityLog() {
+  return safeGet(ACTIVITY_KEY, []);
+}
+
 export function getAnalytics() {
   const log = safeGet(ACTIVITY_KEY, []);
   const favorites = getFavorites();
