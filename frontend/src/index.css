@@ -10814,7 +10814,417 @@ textarea {
 }
 
 
-/* Favorites Controls Card */
+/* ==========================================================================
+   Favorites V2 — Curated Wishlist & Bookmarks Atelier
+   ========================================================================== */
+
+.favorites-page-v2 {
+  width: 100%;
+  max-width: 1380px;
+  margin: 0 auto;
+  padding-bottom: 3.5rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+/* Floating Toast Notification */
+.favorites-floating-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(8, 19, 33, 0.95);
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  border-radius: 9999px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(244, 63, 94, 0.25);
+  backdrop-filter: blur(16px);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 500;
+  animation: toastSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.favorites-floating-toast .toast-icon {
+  font-size: 1.1rem;
+  color: #FB7185;
+}
+
+/* Atmospheric Hero Sanctuary Banner */
+.favorites-hero-sanctuary {
+  position: relative;
+  border-radius: 20px;
+  padding: 2.25rem 2.5rem;
+  background:
+    radial-gradient(ellipse 70% 80% at 85% 20%, rgba(244, 63, 94, 0.13), transparent 70%),
+    radial-gradient(ellipse 60% 70% at 15% 85%, rgba(168, 85, 247, 0.12), transparent 70%),
+    linear-gradient(135deg, #091424 0%, #0d1e34 50%, #07101e 100%);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 20px 40px -15px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.hero-sanctuary-badge.rose-badge {
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  color: #FB7185;
+}
+
+.title-gradient-rose {
+  background: linear-gradient(135deg, #FB7185 0%, #E879F9 50%, #38BDF8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.btn-hero-primary.rose-gradient {
+  background: linear-gradient(135deg, #E11D48 0%, #9333EA 100%);
+  box-shadow: 0 4px 18px rgba(225, 29, 72, 0.4);
+}
+
+.btn-hero-primary.rose-gradient:hover {
+  box-shadow: 0 6px 24px rgba(244, 63, 94, 0.55);
+}
+
+.bento-pill .pill-dot.rose {
+  background: #F43F5E;
+  box-shadow: 0 0 8px #F43F5E;
+}
+
+/* ==========================================================================
+   Genre & Affinity Filter Strip
+   ========================================================================== */
+.favorites-genre-filter-strip {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.15rem;
+  background: rgba(11, 23, 38, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+  overflow-x: auto;
+}
+
+.filter-strip-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.genre-chips-scroll {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.genre-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #CBD5E1;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.genre-chip-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.genre-chip-btn.active {
+  background: rgba(244, 63, 94, 0.18);
+  border-color: rgba(244, 63, 94, 0.45);
+  color: #FDA4AF;
+  font-weight: 600;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.2);
+}
+
+.genre-chip-btn .chip-count {
+  font-size: 0.72rem;
+  color: #94A3B8;
+}
+
+.genre-chip-btn.active .chip-count {
+  color: #FB7185;
+}
+
+/* ==========================================================================
+   Favorites Command Toolbar
+   ========================================================================== */
+.favorites-command-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.15rem;
+  background: rgba(11, 23, 38, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  flex-wrap: wrap;
+}
+
+.toolbar-left-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.toolbar-count-badge {
+  font-size: 0.84rem;
+  color: #94A3B8;
+}
+
+.toolbar-count-badge strong {
+  color: #FFFFFF;
+}
+
+.btn-reset-filters {
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  color: #FB7185;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reset-filters:hover {
+  background: rgba(244, 63, 94, 0.25);
+  color: #FFFFFF;
+}
+
+.favorites-search-input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.favorites-search-input-box .search-symbol {
+  position: absolute;
+  left: 0.75rem;
+  font-size: 0.82rem;
+  color: #64748B;
+  pointer-events: none;
+}
+
+.favorites-search-field {
+  padding: 0.48rem 2rem 0.48rem 2.2rem;
+  background: rgba(8, 19, 33, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  color: #F1F5F9;
+  font-size: 0.82rem;
+  width: 250px;
+  transition: all 0.2s ease;
+}
+
+.favorites-search-field:focus {
+  outline: none;
+  border-color: #FB7185;
+  width: 290px;
+  background: rgba(8, 19, 33, 0.95);
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.25);
+}
+
+.btn-clear-search-field {
+  position: absolute;
+  right: 0.65rem;
+  background: none;
+  border: none;
+  color: #94A3B8;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.favorites-sort-select {
+  padding: 0.48rem 0.85rem;
+  background: rgba(8, 19, 33, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  color: #CBD5E1;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.favorites-sort-select:focus {
+  outline: none;
+  border-color: #FB7185;
+}
+
+.favorites-view-toggle-group {
+  display: flex;
+  background: rgba(8, 19, 33, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  padding: 0.15rem;
+}
+
+.favorites-view-toggle-group .view-mode-btn.active {
+  background: rgba(244, 63, 94, 0.2);
+  color: #FDA4AF;
+}
+
+/* ==========================================================================
+   Favorites Card Ribbon & Actions
+   ========================================================================== */
+.favorite-card-container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.favorite-actions-ribbon {
+  margin-top: 0.65rem;
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.btn-fav-ribbon-primary {
+  flex: 1;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38BDF8;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-fav-ribbon-primary:hover {
+  background: var(--accent-cyan);
+  color: #050B14;
+}
+
+.btn-fav-ribbon-ghost {
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94A3B8;
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-fav-ribbon-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+.btn-fav-ribbon-danger {
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #F87171;
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-fav-ribbon-danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #FFFFFF;
+}
+
+/* ==========================================================================
+   Aesthetic Favorites Empty States
+   ========================================================================== */
+.aesthetic-favorites-empty-card {
+  padding: 3.5rem 2rem;
+  text-align: center;
+  background: rgba(8, 19, 33, 0.55);
+  border: 1px dashed rgba(244, 63, 94, 0.25);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.aesthetic-favorites-empty-card.filtered {
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+.empty-halo-icon.rose-halo .empty-emoji {
+  color: #FB7185;
+}
+
+.empty-pulse-halo.rose-pulse {
+  background: radial-gradient(circle, rgba(244, 63, 94, 0.25) 0%, transparent 70%);
+}
+
+.empty-actions-row {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-empty-action.rose-btn {
+  background: linear-gradient(135deg, #E11D48 0%, #9333EA 100%);
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  box-shadow: 0 4px 16px rgba(225, 29, 72, 0.35);
+}
+
+.btn-empty-action.rose-btn:hover {
+  box-shadow: 0 6px 22px rgba(244, 63, 94, 0.55);
+}
+
+.btn-empty-secondary {
+  padding: 0.65rem 1.35rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: #CBD5E1;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-empty-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+/* ==========================================================================
+   Old Compatibility Classes (Keep safe)
+   ========================================================================== */
+.favorites-page {
+  width: 100%;
+}
+
 .favorites-controls-card {
   display: flex;
   gap: 1.25rem;
@@ -10896,6 +11306,7 @@ textarea {
   background: rgba(239, 68, 68, 0.25);
   color: #FFFFFF;
 }
+
 
 /* ==========================================================================
    Availability Dashboard Page
