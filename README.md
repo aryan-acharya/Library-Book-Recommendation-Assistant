@@ -1,5 +1,13 @@
 # LibraAI – Library Book Recommendation Assistant
 
+> **An intelligent digital library recommendation assistant powered by First-Order Logic Knowledge Base (10,538 books), Forward/Backward Chaining rule inference, dynamic multi-attribute scoring, and Random-Restart Hill Climbing optimization.**
+
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.0%2B-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Knowledge Base](https://img.shields.io/badge/Knowledge%20Base-10%2C538%20Books-success)](Popular-Books-10000plus-Ratings-Enriched.csv)
+
 ## 1. Project Title
 
 **LibraAI – Library Book Recommendation Assistant**
