@@ -796,7 +796,7 @@ export default function MyLibrary() {
                   : 'Books you discover on Home, Recommendations, or Search will automatically appear here for easy recall.'
               }
               actionText="Discover Books on Home →"
-              onAction={() => navigate('/')}
+              onAction={() => navigate('/home')}
             />
           ) : viewMode === 'bookshelf' ? (
             <VirtualBookshelfRack

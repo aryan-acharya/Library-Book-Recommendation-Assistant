@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import libraryBackdrop from '../assets/libraai-library-background.png';
-import { getDemoCredentials, loginUser, resetPasswordRequest } from '../authStore';
+import { getCurrentUser, getDemoCredentials, loginUser, resetPasswordRequest } from '../authStore';
 import { useAuthTheme } from '../useAuthTheme';
 
 export default function Login() {
@@ -20,7 +20,20 @@ export default function Login() {
   const { theme, toggleTheme } = useAuthTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || '/';
+  const rawFrom = location.state?.from;
+  const from =
+    rawFrom?.pathname &&
+    rawFrom.pathname !== '/' &&
+    rawFrom.pathname !== '/login' &&
+    rawFrom.pathname !== '/signup'
+      ? rawFrom.pathname + (rawFrom.search || '')
+      : '/home';
+
+  useEffect(() => {
+    if (getCurrentUser()) {
+      navigate('/home', { replace: true });
+    }
+  }, [navigate]);
 
   // Handle auto-filling demo credentials
   function handleAutofillDemo() {
@@ -295,7 +308,7 @@ export default function Login() {
           </div>
 
           {/* Action Buttons Row */}
-          <div className="auth-actions-row">
+          <div className="auth-actions-row auth-button-group">
             <button
               type="submit"
               className="auth-btn-primary"

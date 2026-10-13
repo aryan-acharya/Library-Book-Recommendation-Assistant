@@ -13668,10 +13668,13 @@ textarea {
 }
 
 /* Action Buttons */
-.auth-actions-row {
+.auth-actions-row,
+.auth-button-group {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 0.85rem;
+  gap: 14px;
+  width: 100%;
 }
 
 .auth-btn-primary {
@@ -13976,6 +13979,18 @@ textarea {
   .auth-btn-primary,
   .auth-btn-secondary {
     width: 100%;
+  }
+  .auth-button-group {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+  }
+  .auth-button-group .auth-btn-primary,
+  .auth-button-group .auth-btn-secondary {
+    width: auto;
   }
 }
 

@@ -6,7 +6,7 @@ import { getCurrentUser, logoutUser } from '../authStore';
 
 const navItems = [
   {
-    to: '/',
+    to: '/home',
     label: 'Home',
     end: true,
     icon: (
@@ -211,7 +211,7 @@ export default function Layout() {
             </svg>
           </button>
 
-          <NavLink to="/" className="topbar-brand">
+          <NavLink to="/home" className="topbar-brand">
             <span className="brand-book-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>

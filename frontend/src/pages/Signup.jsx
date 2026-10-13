@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import libraryBackdrop from '../assets/libraai-library-background.png';
-import { registerUser } from '../authStore';
+import { getCurrentUser, registerUser } from '../authStore';
 import { useAuthTheme } from '../useAuthTheme';
 
 export default function Signup() {
@@ -17,6 +17,12 @@ export default function Signup() {
 
   const { theme, toggleTheme } = useAuthTheme();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (getCurrentUser()) {
+      navigate('/home', { replace: true });
+    }
+  }, [navigate]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -46,7 +52,7 @@ export default function Signup() {
       if (res.success) {
         setSuccessMessage('Account created successfully! Preparing your library sanctuary...');
         setTimeout(() => {
-          navigate('/', { replace: true });
+          navigate('/home', { replace: true });
         }, 800);
       } else {
         setErrorMessage(res.error || 'Failed to create account.');
